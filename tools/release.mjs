@@ -25,5 +25,5 @@ const named = files.map(([from, to]) => {
   fs.copyFileSync(`print-out/${from}`, `print-out/release/${to}`);
   return `print-out/release/${to}`;
 });
-execFileSync('gh', ['release', 'upload', tag, ...named, '--clobber', '-R', 'xoob/three-panda'], { stdio: 'inherit' });
+execFileSync('gh', ['release', 'upload', tag, ...named, '--clobber', '-R', 'xoob/three-pandas'], { stdio: 'inherit' });
 console.log(`${tag}: ${files.map(([, to]) => to).join(', ')}`);

@@ -15,7 +15,7 @@ the panda (a photo helps), builds the figure, shows you screenshots and opens
 a pull request.
 
 ```text
-I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-pandas-2, read its CLAUDE.md and follow it: ask me about the panda (I may paste a photo), build the figure, show me screenshots as you go, and open a pull request when I'm happy.
+I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-pandas, read its CLAUDE.md and follow it: ask me about the panda (I may paste a photo), build the figure, show me screenshots as you go, and open a pull request when I'm happy.
 ```
 
 ## Run
