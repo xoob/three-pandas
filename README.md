@@ -10,12 +10,12 @@ figure. Live at **https://pandas.xoob.de**.
 ## Make your own panda
 
 Paste this into a new [Claude Code](https://claude.com/claude-code) session
-(the stage's "Open in Claude" opens the Claude app with it). Claude asks a few
-questions at a time (a photo helps), builds the figure, shows you screenshots
-and opens a pull request.
+(the stage's "Open in Claude" opens the Claude app with it). Claude asks about
+the panda (a photo helps), builds the figure, shows you screenshots and opens
+a pull request.
 
 ```text
-I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-panda, read its CLAUDE.md and follow it: interview me a few questions at a time (I may paste a photo), then build the figure, show me screenshots, take my feedback, and finish with a pull request.
+I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-pandas, read its CLAUDE.md and follow it: ask me about the panda (I may paste a photo), build the figure, show me screenshots as you go, and open a pull request when I'm happy.
 ```
 
 ## Run

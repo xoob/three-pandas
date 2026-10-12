@@ -26,7 +26,7 @@ const phone = matchMedia('(max-width: 600px)'); // the hero layout in stage.html
 const HERO = 'analyst'; // centre stage (middle of src/cast.json) and the subject when nobody is selected
 const WIDTHS = [18, 21, 26, 21, 18]; // % of the row per spot, as .p1–.p5 in stage.html
 const OVERLAP = 1.8; // negative margin between spots, % of the row
-const GITHUB = 'https://github.com/xoob/three-panda';
+const GITHUB = 'https://github.com/xoob/three-pandas';
 // a new Code session in the Claude desktop app, the README's prompt prefilled
 const CLAUDE = 'claude://code/new?q=' + encodeURIComponent(CLAUDE_PROMPT);
 
@@ -559,7 +559,7 @@ function customizeHtml(f) {
 
 // The Bambu Studio projects are files of a GitHub release (npm run release).
 // Bambu Studio registers bambustudioopen:// on macOS and bambustudio://open?file= elsewhere.
-const RELEASE = 'https://github.com/xoob/three-panda/releases/download/edition-1/';
+const RELEASE = 'https://github.com/xoob/three-pandas/releases/download/edition-1/';
 function bambuLink(file) {
   const url = encodeURIComponent(RELEASE + file);
   return /Mac OS X/.test(navigator.userAgent) && !/iPhone|iPad/.test(navigator.userAgent)

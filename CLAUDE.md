@@ -15,28 +15,28 @@ and props.
 
 ## Interview
 
-Before touching a file: start `npm install` in the background, then
-interview. Use AskUserQuestion (up to 4 questions per call, 2–4 options each;
-"Other" is added for free text; `multiSelect` where noted). One round at a
-time; read the answers before writing the next round. Skip anything already
-answered (in the prompt, by the photo) and say in the question text what you
-took from where. At most four rounds; stop as soon as you have three traits,
-an accent, a pose and a prop. Never ask about what does not read at 40 mm
-(eye colour, stubble, patterns, text, jewellery).
+Start `npm install` in the background, then get to know the panda. Follow the
+user's lead: what they volunteer (a photo, a pose they like, a name) beats
+any question you planned. Never ask about something already answered, and
+never about what does not read at 40 mm (eye colour, stubble, patterns,
+text, jewellery).
 
-Round 1, who:
-- Who is the panda for? `Me` / `A colleague` / `A team mascot, not a person`
-- Do you have a photo? `I'll paste one now` / `No, I'll describe them`
-
-Then, in chat: ask for the first name, and wait for the photo if promised.
+1. One chat message: who is the panda for (themselves, a colleague, a team
+   mascot), the first name on the figure, a photo if they have one, and a
+   few words in their own voice: what they're known for, a hobby, a
+   favourite gadget, a pose they like, an MBTI type if they know it.
+2. Read the answer and the photo, and say what you took from them.
+3. At most one AskUserQuestion round (up to 4 questions, 2–4 options each;
+   "Other" is added for free text) for what is still open, built from the
+   question bank below. Skip it when nothing important is open. If the user
+   turns the cards down, carry on in chat and don't use them again.
 
 Photo: read only hair silhouette, hair colour, facial hair and glasses from
-it; say what you read and let them correct it. Never copy it into the repo,
-never describe the person beyond those four things in files, commits or the
-PR. The figure carries a first name only; its id is the lowercase first
-name, with an initial if taken (`hadas-n`).
+it. Never copy it into the repo, never describe the person beyond those four
+things in files, commits or the PR. The figure carries a first name only;
+its id is the lowercase first name, with an initial if taken (`hadas-n`).
 
-Round 2, looks (only what the photo left open):
+Question bank: looks (only what the photo left open):
 - Hair: `None, plain panda head` / `Short` (`crop` or `short`) / `Tall or
   textured on top` (`textured`) / `Long` (`long`); `topknot` (tied up, with
   `band` for a headband) via Other.
@@ -47,7 +47,7 @@ Round 2, looks (only what the photo left open):
 - Glasses: `None` / `Frames` (`octagon`, `halfRim` or thin `round` wire) /
   `Shades`.
 
-Round 3, character:
+Question bank: character:
 - Which sounds most like them? (the question text invites an MBTI type via
   Other) `Runs the show: organised, decisive, on time` / `Deep in the
   problem: quiet, finds the bug nobody else can` / `The one everyone talks
@@ -58,7 +58,7 @@ Round 3, character:
 - Mood on the figure: `Cheerful, laughing` / `Calm and kind` / `Focused,
   intense` / `Zen, eyes closed`.
 
-Round 4, finishing (after applying the maps below):
+Question bank: finishing (after applying the maps below):
 - Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
 - Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)` / `Hoodie`.
 - Pose: your best candidates, existing ones from `POSES` named with their
@@ -91,22 +91,36 @@ Maps (orientation, not law; the photo and the free text win):
 - Do not give a new figure another cast member's prop + pose pair (magnifier
   + `inspect` is the Detective) unless it is genuinely theirs.
 
-Summary, in chat, then one question: name and id; the three traits that read
-at 40 mm; filaments as a list (white, black, hair colour if any, accent; at
-most 4, so brown hair plus a grey beard plus an accent does not fit); pose,
-prop, eyes and mouth; kit parts vs new kit parts, and what each new part
-costs; what you left out and why. Unanswered questions get the kit default,
-named here. Then AskUserQuestion: `Build it` / `Change something first`.
-From here on it is a normal session (Add a figure, below): build, show
-screenshots, take feedback. AskUserQuestion only returns to pick between
-rendered candidates, after showing the `tools/palette.mjs` sheet.
+Summary, in chat, short: name and id; the three traits that read at 40 mm;
+filaments as a list (at most 4, white and black included); pose, prop, eyes
+and mouth; the new kit parts you will build; what you left out and why.
+Then build right away; the user corrects course on the first screenshots.
+
+## Working with the user
+
+- Show a first render early: the recipe with existing parts as stand-ins,
+  within the first few minutes, before building new parts. Then show each
+  new part as soon as it renders. Never go quiet for long stretches.
+- Filaments: count before you render. Every candidate you offer fits in 4
+  filaments, and you label each with its list (e.g. "white, black, brown,
+  purple"). When the user asks for a mix that does not fit, say so and offer
+  the nearest mixes that do.
+- A new palette colour (`FILAMENTS`) is a kit change with a real cost (one
+  more spool to buy and load): propose it in the summary with a reason,
+  don't add it silently.
+- Candidates side by side in one sheet, labelled A, B, C, are faster to
+  judge than questions.
+- Edit files with your Edit and Write tools, not sed, heredocs or scripts,
+  so the user can follow the diffs.
 
 ## Add a figure
 
-1. Run the interview (above) and get the summary confirmed: who, first name,
-   three traits, accent, pose, prop, kit vs new parts.
+1. Run the interview (above).
 2. Read `docs/design-language.md` (how figures are designed, what reads at
-   40 mm, what was tried and rejected) before choosing parts.
+   40 mm, what was tried and rejected) before choosing parts. Section 4
+   lists looks that were already rejected (a beard stuck on the snout,
+   stubble, strand hair, ...): check every new part against it before
+   showing it.
 3. Create `figures/<id>.json` (id: lowercase, digits, dashes); the format is
    documented at the top of `src/recipes.js`. Copy an existing figure as a
    start. Touch only your figure's file and the kit parts it needs.
@@ -174,6 +188,21 @@ no thin parts in mid-air, painted vs sculpted features, colour changes) are in
 
 ## Finish
 
-Work on a branch and open a pull request with the screenshots (`gh repo fork
---remote` first if you cannot push to the repo). Never change
-`EDITION`: editions are changed by hand (`docs/printing.md`, "Editions and releases").
+Work on the branch `figure/<id>` (`git switch -c figure/<id>`, push with
+`git push -u origin figure/<id>`; `gh repo fork --remote` first if you
+cannot push to the repo). Pushing work in progress is fine.
+
+When the user is happy, without waiting to be asked:
+1. Run every check: `npm run check`, `npm run posecheck`, the print export
+   of the figure (`connected_bodies: 1`), and the pixel comparison of the
+   other figures whenever shared code changed.
+2. Open the pull request, titled `Figure: <Name>`, its description like the
+   other figure PRs: one line of the figure's traits, then
+   `Live stage: https://figure-<id>-three-panda.xoob.workers.dev/#<id>/<pose>`
+   (the branch's Cloudflare preview).
+3. Give the user both links, the PR and the live stage. The preview
+   workflow adds the figure sheets and print previews to the PR as a
+   comment within a few minutes.
+
+Never change `EDITION`: editions are changed by hand (`docs/printing.md`,
+"Editions and releases").
