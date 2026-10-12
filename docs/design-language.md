@@ -71,9 +71,12 @@ so a new figure looks like it came from the same designer.
    the pose. You do not see: stubble, eye colour, freckles, patterns, thin
    jewellery, text. Fausto = topknot + full beard + meditating; Ganani =
    textured hair + shades + rocket; Hadas N. = long hair + dress.
-3. **Kit first.** Try existing parts in the recipe before adding any. Render
-   candidates side by side with `node tools/palette.mjs <figure> <field>
-   'a;b;c' front:focus=head` (eyes, mouth, snout, or slot JSON).
+3. **At least one new part.** The kit is still small; a figure built only
+   from existing parts looks like one already in the cast. Give each figure
+   a new part of its own for its strongest trait, and use the kit for the
+   rest. Render candidates side by side with `node tools/palette.mjs
+   <figure> <field> 'a;b;c' front:focus=head` (eyes, mouth, snout, or slot
+   JSON).
 4. **New parts become kit options**, not figure hacks: a new hair style in
    `HAIR`, a new `BEARDS` entry, an `EYE_STYLES`/`MOUTHS` function, a pose in
    `POSES`, a prop in `PROPS`. Add general parameters (`comb`, `hang`, `tie`,

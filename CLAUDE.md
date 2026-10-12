@@ -59,9 +59,10 @@ Round 3, character:
 Round 4, finishing (after applying the maps below):
 - Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
 - Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)`.
-- Pose: your three best candidates from `POSES`, each named with its comment
-  line from `src/rig.js` and the prop it implies (e.g. `hooray: shows the
-  tablet off`), plus `You choose` as the fourth.
+- Pose: your best candidates, existing ones from `POSES` named with their
+  comment line from `src/rig.js` and the prop they imply (e.g. `hooray:
+  shows the tablet off`) and new ones described in a few words (e.g. `new:
+  sips coffee`), plus `You choose`; four options at most.
 
 Maps (orientation, not law; the photo and the free text win):
 - Hobby → prop and pose: sport → `run`; music → `headphones` (+ `notes` or
@@ -79,10 +80,11 @@ Maps (orientation, not law; the photo and the free text win):
   `open` or `relaxed` + `smile` or `calm`; focused = `focused` or `alert` +
   `firm`; zen = `serene` + `calm`. `alert` only on an action pose; `wink` and
   `big` are seasoning, not identity.
-- Not in the kit yet (hat, cap, mug, laptop, phone, bike, instrument, pet,
-  ponytail, curls): extend the kit, cheapest step first (Add a figure,
-  step 5): a variant of an existing part (new colour, angle, parameters)
-  before a new part. Name the step in the summary; don't ask about it as
+- The kit is small, so these maps only name the closest existing parts.
+  Every figure gets at least one new part of its own (Add a figure, step 5):
+  pick the trait that most defines the person (a ponytail, curls, a cap, a
+  mug, a laptop, a bike, an instrument, a pet, a signature gesture) and
+  plan it as a new kit entry. Name it in the summary; don't ask about it as
   another question.
 - Do not give a new figure another cast member's prop + pose pair (magnifier
   + `inspect` is the Detective) unless it is genuinely theirs.
@@ -115,17 +117,16 @@ rendered candidates, after showing the `tools/palette.mjs` sheet.
    - props: `PROPS` in `src/passes.js`
    - poses: `POSES` in `src/rig.js` (degrees; `tools/reach.mjs` finds arm
      angles for a paw target)
-5. The kit is young and small, so extending it is normal. Go for the
-   cheapest step that carries the trait:
-   1. An existing part as is, varied in the recipe: slot colour, `accent`,
-      eyes and mouth per pose (`faces`), `look`, `spin`, `only`/`hide`.
-   2. A variant of an existing part: a new entry copied from an existing
-      style, prop or pose with a few values changed (colour, angle, length,
-      volume). Cheap, and it matches the cast by construction.
-   3. A new part (a new style, prop, pose or parameter), reusable by later
-      figures, never a figure-only hack.
+5. The kit is still small: a handful of hair styles, beards, props and
+   poses. Reusing them makes every new figure look like an existing one, so
+   until the kit is large, give each figure at least one new part of its own
+   (a hair style, beard, prop or pose) that carries its identity. Build it as
+   a reusable kit entry, never a figure-only hack, and start from the
+   closest existing part's construction (its shell, parameters, proportions)
+   so it belongs to the same toy line. Existing parts are fine for the rest
+   of the figure.
 
-   For 2 and 3:
+   For every new part:
    - Existing figures must not change: new parameters default to the old
      behaviour. Screenshot every figure before and after and compare with
      `tools/pixdiff.mjs`.
