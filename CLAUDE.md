@@ -79,10 +79,12 @@ Maps (orientation, not law; the photo and the free text win):
   `open` or `relaxed` + `smile` or `calm`; focused = `focused` or `alert` +
   `firm`; zen = `serene` + `calm`. `alert` only on an action pose; `wink` and
   `big` are seasoning, not identity.
-- Not in the kit (hat, cap, mug, laptop, phone, bike, instrument, pet,
-  ponytail, curls): a new prop or style is a kit part and costs an extra
-  round of building; a pose often carries the same trait for free. Offer
-  that choice in the summary, not as another question.
+- Not in the kit yet (hat, cap, mug, laptop, phone, bike, instrument, pet,
+  ponytail, curls): extend the kit when the trait is worth it. A new prop,
+  style or pose is fine; it takes an extra round of building and must fit
+  the cast (Add a figure, step 5). Sometimes an existing pose carries the
+  same trait for free; offer that choice in the summary, not as another
+  question.
 - Do not give a new figure another cast member's prop + pose pair (magnifier
   + `inspect` is the Detective) unless it is genuinely theirs.
 
@@ -114,9 +116,16 @@ rendered candidates, after showing the `tools/palette.mjs` sheet.
    - props: `PROPS` in `src/passes.js`
    - poses: `POSES` in `src/rig.js` (degrees; `tools/reach.mjs` finds arm
      angles for a paw target)
-5. When the kit lacks a part, add a reusable option (a new style or option
-   in the table above), not a figure-only hack. Existing figures must not
-   change: screenshot them before and after and compare with `tools/pixdiff.mjs`.
+5. When the kit lacks a part, extend it: add a reusable option (a new style,
+   prop, pose or parameter in the table above), not a figure-only hack.
+   - Existing figures must not change: new parameters default to the old
+     behaviour. Screenshot every figure before and after and compare with
+     `tools/pixdiff.mjs`.
+   - New parts must look like the cast's: chunky toy pieces with rounded
+     lips, the same thickness and detail level, accents from the palette
+     (`docs/design-language.md`, section 1). Render the new part next to
+     existing figures and check it against the review checklist (section 5)
+     before showing it.
 6. Colours come from the global palette `FILAMENTS` in `src/passes.js` (white,
    black and six accents). A figure uses at most 4 filaments, white and black
    included. Give its signature pose a QR code in `codes`: a random 4-digit
