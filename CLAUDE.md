@@ -80,11 +80,10 @@ Maps (orientation, not law; the photo and the free text win):
   `firm`; zen = `serene` + `calm`. `alert` only on an action pose; `wink` and
   `big` are seasoning, not identity.
 - Not in the kit yet (hat, cap, mug, laptop, phone, bike, instrument, pet,
-  ponytail, curls): extend the kit when the trait is worth it. A new prop,
-  style or pose is fine; it takes an extra round of building and must fit
-  the cast (Add a figure, step 5). Sometimes an existing pose carries the
-  same trait for free; offer that choice in the summary, not as another
-  question.
+  ponytail, curls): extend the kit, cheapest step first (Add a figure,
+  step 5): a variant of an existing part (new colour, angle, parameters)
+  before a new part. Name the step in the summary; don't ask about it as
+  another question.
 - Do not give a new figure another cast member's prop + pose pair (magnifier
   + `inspect` is the Detective) unless it is genuinely theirs.
 
@@ -116,8 +115,17 @@ rendered candidates, after showing the `tools/palette.mjs` sheet.
    - props: `PROPS` in `src/passes.js`
    - poses: `POSES` in `src/rig.js` (degrees; `tools/reach.mjs` finds arm
      angles for a paw target)
-5. When the kit lacks a part, extend it: add a reusable option (a new style,
-   prop, pose or parameter in the table above), not a figure-only hack.
+5. The kit is young and small, so extending it is normal. Go for the
+   cheapest step that carries the trait:
+   1. An existing part as is, varied in the recipe: slot colour, `accent`,
+      eyes and mouth per pose (`faces`), `look`, `spin`, `only`/`hide`.
+   2. A variant of an existing part: a new entry copied from an existing
+      style, prop or pose with a few values changed (colour, angle, length,
+      volume). Cheap, and it matches the cast by construction.
+   3. A new part (a new style, prop, pose or parameter), reusable by later
+      figures, never a figure-only hack.
+
+   For 2 and 3:
    - Existing figures must not change: new parameters default to the old
      behaviour. Screenshot every figure before and after and compare with
      `tools/pixdiff.mjs`.
