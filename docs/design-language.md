@@ -55,7 +55,11 @@ so a new figure looks like it came from the same designer.
   Each figure has a standing pose and optionally one signature action pose
   (`POSES` in `src/rig.js`; `figures/*.json` `poses`, `only`/`hide`, `faces`).
   Poses are calm and legible: arms clear of the head (posecheck), feet on the
-  base, nothing mid-air.
+  base, nothing mid-air. The signature pose is what the stage opens on and
+  what gets printed; a figure may have just that one.
+- **Readable from the default angled view.** Turn heads or set `look` so
+  both pupils stay visible (an edge-on pupil reads as a closed eye); kicked
+  feet point their toes down along the shin.
 
 ## 2. Approaching a new character
 
@@ -89,48 +93,57 @@ so a new figure looks like it came from the same designer.
 7. **Report with pictures**: angle, side, head close-ups, print preview, the
    colours used (for plate planning), and the list of files touched.
 
-## 3. Printability shapes the design
-
-- 1 model unit ≈ 17 mm at the shared scale; `PRINT.minLine` 0.05 ≈ 0.85 mm
-  is the thinnest line (two nozzle widths). Lines and inlays use
-  `m.style.print` variants (e.g. eyes, mouth strands) that widen to it.
-- One fixed scale for all figures: a standing Rest-pose panda is 40 mm; a
-  figure that would be taller is shrunk to fit, a seated one simply prints
-  shorter. Design compact and low, not tall.
-- **No thin mid-air parts.** Everything hangs off something: hair is a shell on
-  the head, a bun sits on the hair with its tie as a solid cylinder, the long
-  beard rests on the chest, the rocket stands on a smoke column from the
-  base, tucked feet and shins touch the base. A flag on a pole was dropped as
-  unprintable.
-- **One connected body per figure** (`connected_bodies: 1` in the print
-  report). Parts overlap their support by a few hundredths (`inlay`, `SINK`)
-  so the booleans merge them.
-- **Colour by priority** (`ROLES` in `src/passes.js`): base fur 1, hair 1.5,
-  black markings 2, patches 3, accent colours 4, dark details 5, eyes/trim 6,
-  pupils 7. Details win over what they sit on, so a tie "ring" can be a solid
-  cylinder inside the bun. Painted areas become inlays `PRINT.inlay` deep.
-- Keep relief ≥ 0.02–0.03 units (0.4–0.5 mm) or it vanishes in print; comb
-  grooves are 0.025, beard grooves 0.02–0.03.
-- Max 4 filaments per figure and per plate (`PLATES` in tools/print.mjs):
-  white + black + 2 accents. Plan a figure's accents so it can share a plate.
-
-## 4. Learnings from the test prints
+## 3. Printability
 
 Learned from the viewer and from test prints (A1 mini, 0.4 mm nozzle, 0.16 mm
-layers, 40 mm figures). Follow them for new figures, parts, poses and props.
+layers, 40 mm figures). Follow them for new figures, parts, poses and props;
+how the export works is in [printing.md](printing.md).
+
+### Scale and sizes
+
+- **One fixed scale for all figures**: a standing Rest-pose panda is 40 mm; a
+  figure that would be taller is shrunk to fit, a seated one simply prints
+  shorter. Design compact and low, not tall. 1 model unit ≈ 17 mm.
+- **Minimum sizes.** Details ≥ 0.85 mm (`PRINT.minLine` 0.05, two nozzle
+  widths); lines and inlays use `m.style.print` variants (e.g. eyes, mouth
+  strands) that widen to it. Relief ≥ 0.02–0.03 units (0.4–0.5 mm) or it
+  vanishes; comb grooves are 0.025, beard grooves 0.02–0.03. First-layer
+  features ≥ one solid line (~0.7 mm; 0.43 mm letter strokes broke up);
+  isolated first-layer dots need ~1 mm or they get knocked off when the other
+  colour prints (0.72 mm QR modules mostly failed, 1 of 7 scanned; the codes
+  now use ~0.93 mm).
+
+### One model, one solid
 
 - **One model for viewer and print.** Base, props, decals and inlays are the
   same parts in both; the export only thickens details and turns paint into
   inlays. What the viewer shows is what prints — never design a viewer-only
   look (the hologram placeholder is the one deliberate exception; mirrored
   shade lenses print hollow).
+- **One connected solid per figure** (`connected_bodies: 1` in the print
+  report). Soles and floor props sink into the base (`BASE.sink`), held props
+  overlap the paw, and parts overlap their support by a few hundredths
+  (`inlay`) so the booleans merge them.
+- **No thin mid-air parts.** Everything hangs off something: hair is a shell on
+  the head, a bun sits on the hair with its tie as a solid cylinder, the long
+  beard rests on the chest, the rocket stands on a smoke column from the
+  base, tucked feet and shins touch the base. A flag on a pole was dropped as
+  unprintable.
+- **No overhangs onto the base.** Floor props are solid down to the base
+  (gadget, rocket smoke column), low props rest on it; tree supports are
+  acceptable for raised arms and props held high. Leave the support filament
+  to the slicer: forced to black, supports left dark marks where they touch
+  white surfaces.
+
+### Paint and relief
+
 - **Painted vs raised — how to decide.** Anything that is only a colour (eye
   patches, pupils, the grin "D", badge, tablet icon) is a surface decal in
-  the viewer and a flush 0.85 mm inlay in print; raised bumps on the face
-  need supports and were removed (tube mouths, ellipsoid pupils). This
-  branch added sculpted face pieces — hair, beards, moustache, the `beam`
-  mouth, lid-line eyes — because they are real volumes or must read from the
-  side. Rule: a feature that changes the silhouette or must be seen in
+  the viewer and a flush 0.85 mm inlay in print (`PRINT.inlay`); raised bumps
+  on the face need supports and were removed (tube mouths, ellipsoid pupils).
+  Sculpted face pieces — hair, beards, moustache, the `beam` mouth, lid-line
+  eyes — are volumes because they change the silhouette or must read from
+  the side. Rule: a feature that changes the silhouette or must be seen in
   profile is a volume (hair, beard, nose, ears, props); a feature that only
   changes colour on the surface is paint. Sculpted face pieces lie on the
   face with a rounded lip and reach into the head (`inlay`), so they print
@@ -147,49 +160,38 @@ layers, 40 mm figures). Follow them for new figures, parts, poses and props.
 - **Decals stay where they belong.** Project a decal only as deep as the
   surface curves under it (else a mouth lands on the chin too); per-pose
   decals (`faces.<pose>.look`) slide along the tangent plane.
-- **No overhangs onto the base.** Floor props are solid down to the base
-  (gadget, rocket smoke column), low props rest on it; tree supports are
-  acceptable for raised arms and props held high. Leave the support filament
-  to the slicer: forced to black, supports left dark marks where they touch
-  white surfaces.
-- **Minimum sizes.** Details ≥ 0.85 mm; first-layer features ≥ one solid
-  line (~0.7 mm; 0.43 mm letter strokes broke up); isolated first-layer dots
-  need ~1 mm or they get knocked off when the other colour prints (0.72 mm
-  QR modules mostly failed, 1 of 7 scanned; the codes now use ~0.93 mm).
+- **Colour by priority** (`ROLES` in `src/passes.js`): base fur 1, hair 1.5,
+  black markings 2, patches 3, accent colours 4, dark details 5, eyes/trim 6,
+  pupils 7. Details win over what they sit on, so a tie "ring" can be a solid
+  cylinder inside the bun.
+
+### Filaments
+
+- **Each figure its own accents, from one global palette.** The palette is
+  `FILAMENTS` in `src/passes.js`: 8 filaments, white and black for the panda
+  plus six accents (blue, green, yellow, red, grey, brown). A figure picks
+  its accents from it (hair, beard, glasses, clothes, props). At most 4
+  filaments per figure and per plate (white + black + 2 accents, the AMS
+  lite's 4 slots); plates group figures whose colours fit (`PLATES` in
+  `tools/print.mjs`), so plan a figure's accents so it can share a plate.
+  Add a palette colour only when a character truly needs it, and prefer
+  reusing one.
 - **Filament changes cost print time — a trade-off, not a rule.** Every layer
   prints each colour present once plus a purge, so a colour adds changes on
   every layer it spans. Weigh it case by case; the look decides each time
   (the gadget stand went black, the Guardian's shield stayed blue).
-- **Colours: each figure its own accents, from one global palette.** The
-  palette is `FILAMENTS` in `src/passes.js`: 8 filaments, white and black for
-  the panda plus six accents (blue, green, yellow, red, grey, brown). A figure
-  picks its accents from it (hair, beard, glasses, clothes, props); plates
-  group figures whose colours fit the AMS's 4 slots (`PLATES` in
-  tools/print.mjs). Add a palette colour only when a character truly needs
-  it, and prefer reusing one. (The single "edition" accent colour of the
-  first test print was only for that test.)
-- **One connected solid per figure**: soles and floor props sink into the
-  base, held props overlap the paw; the export checks `connected_bodies: 1`.
-- **Readable from the default angled view.** Turn heads or set `look` so
-  both pupils stay visible (an edge-on pupil reads as a closed eye); kicked
-  feet point their toes down along the shin.
-- **Base.** Round plinth, panda 40 mm on top. The underside carries only a
-  QR code, as large as the flat face allows, black on white on any base
-  colour, as one 0.2 mm first layer (black printed first), with a slower
-  first layer whose travel avoids printed areas. Curved lettering around it
-  (2.7 mm, 0.7 mm strokes) came out garbled and was removed. The QR links to
-  a short code (the recipe's `codes`, Cloudflare redirects), so targets
-  change without reprinting.
-- **Bambu project files** come from Bambu Studio's CLI (`tools/bambu.py`)
-  with flattened presets, test-sliced headless; prime tower ~80 × 40 mm,
-  figures 12 mm apart — leave room for it when filling a plate.
-- **Process**: build → screenshots → feedback. Verify with posecheck, the
-  print export (connected bodies, slicing) and QR decoding before calling it
-  done.
-- **Poses**: a character may have a single pose; the signature (action) pose
-  is what the viewer opens on and what gets printed.
 
-## 5. Lessons from feedback
+### Base
+
+- Round plinth, panda 40 mm on top. The underside carries only a QR code, as
+  large as the flat face allows, black on white on any base colour, as one
+  0.2 mm first layer (black printed first), with a slower first layer whose
+  travel avoids printed areas. Curved lettering around it (2.7 mm, 0.7 mm
+  strokes) came out garbled and was removed. The QR links to a short code
+  (the recipe's `codes`, Cloudflare redirects), so targets change without
+  reprinting.
+
+## 4. Lessons from feedback
 
 Rejected, and why:
 - **Strand/lock tubes** (hanging hair locks, beard locks): read as
@@ -247,7 +249,7 @@ Liked: Playmobil-style dress; hologram placeholder; textured hair + shades;
 rocket on smoke; samurai topknot with red tie; comb grooves; serene eyes;
 long full beard onto the chest; the overall chunky toy look.
 
-## 6. Review checklist
+## 5. Review checklist
 
 Before showing a figure, answer each from the renders:
 - Silhouette: front, side, back and top — is it a clean cut-out? Any shelf,

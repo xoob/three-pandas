@@ -67,10 +67,10 @@ before moving on. Build, show, take feedback, repeat.
 
 The rules that keep a figure printable (one connected solid, details ≥ 0.85 mm,
 no thin parts in mid-air, painted vs sculpted features, colour changes) are in
-`docs/design-language.md`, sections 3 and 4. Follow them; check with
-`npm run print`.
+`docs/design-language.md`, section 3; the print export itself is described in
+`docs/printing.md`. Follow them; check with `npm run print`.
 
 ## Finish
 
 Work on a branch and open a pull request with the screenshots. Never change
-`EDITION`: editions are changed by hand (README, "Editions and releases").
+`EDITION`: editions are changed by hand (`docs/printing.md`, "Editions and releases").
