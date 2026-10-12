@@ -215,6 +215,18 @@ export const POSES = {
     legL: { spread: 5 },
     motion: (t) => ({ armR: { raise: 3 * Math.sin(t * 1.5) }, armL: { raise: 3 * Math.sin(t * 1.5) }, head: { tilt: 2 * Math.sin(t * 0.8) } }),
   },
+  present: {
+    label: 'Present',
+    // right paw held out at the side, palm up, showing what stands on it (the
+    // mini panda); left paw on the hip, head tilted toward the right paw
+    head: { tilt: 5, turn: -8 },
+    armR: { raise: 58, forward: 30, twist: 90, bend: 55, wrist: -25 },
+    armL: { raise: 84, forward: 6, twist: -90, bend: 108 },
+    legR: { swing: -3 },
+    legL: { swing: 5, spread: 5 },
+    body: { tilt: 2 },
+    motion: (t) => ({ armR: { raise: 3 * Math.sin(t * 1.5) }, head: { tilt: 2 * Math.sin(t * 1.5) } }), // lifting it a little, proudly
+  },
   onTime: {
     label: 'On Time',
     // stopwatch held up against the chest, left fist pumped at the shoulder,

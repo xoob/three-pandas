@@ -602,7 +602,8 @@ function crescentOutline(c) {
 
 function addFace(m, v) {
   const glasses = !!v.glasses;
-  const patch = EYE_STYLES[v.eyes].patch ?? (glasses ? EYE.patch : EYE.plain.patch); // an eye style may shape the patches
+  // an eye style may shape the patches; so may a glasses style, to fit its lenses
+  const patch = EYE_STYLES[v.eyes].patch ?? (glasses ? LENS_PATCHES[v.glasses.style] ?? EYE.patch : EYE.plain.patch);
   m.texture('patch', (ctx, n, look) => drawPatch(ctx, n, look ? '#1e1f25' : '#8d8780', patch));
   for (const [side, s] of Object.entries(SIDES)) {
     // patch centre: behind the lens with glasses, otherwise at the plain eye position
@@ -1039,6 +1040,60 @@ function addShades(m, colour, v) {
   });
 }
 
+// Round glasses: two circular full rims of even width, a short straight bridge
+// above the middle and the hinges a little above it too, like wire frames
+// drawn with a thick marker. Lenses centred like the other styles, so the eye
+// patches sit the same.
+const ROUND = {
+  lens: { radius: 0.18 }, // opening around the lens centre
+  patch: { rx: 0.205, ry: 0.205, droop: 0, squareness: 2, decal: 0.66 }, // round eye patch ending under the rim
+  rim: { width: 0.05, depth: 0.055 },
+  bridge: { y: 0.075, height: 0.04, depth: 0.045 }, // height above the lens centre
+  hinge: 0.06, // height of the end pieces above the lens centre
+  endPiece: { height: 0.07, back: 0.08 },
+  temple: { inner: 0.65, thickness: 0.04, height: 0.055, backTo: -0.34, drop: 0.07 },
+};
+
+// eye patches of glasses styles whose lenses the default patch does not fit
+const LENS_PATCHES = { round: ROUND.patch };
+
+/** Circle of radius r as CCW points starting at the right. */
+const circle = (r, steps = 48) => Array.from({ length: steps }, (_, i) => {
+  const a = (i / steps) * Math.PI * 2;
+  return new THREE.Vector2(r * Math.cos(a), r * Math.sin(a));
+});
+
+function addRound(m, colour, v) {
+  const H = ROUND, F = GLASSES.front;
+  const minLine = (x) => (m.style.print ? Math.max(x, PRINT.minLine) : x);
+  const w = minLine(H.rim.width);
+  const r = H.lens.radius, R = r + w;
+  for (const [side, s] of Object.entries(SIDES)) {
+    const lens = lensFrame(s);
+    const frame = m.anchor(`lens${side}`, 'head', lens.center, lens.quaternion);
+    const ring = new THREE.Shape(circle(R));
+    ring.holes.push(new THREE.Path(circle(r).reverse()));
+    m.add({ name: `rim${side}`, role: colour, parent: frame,
+      make: () => new THREE.ExtrudeGeometry(ring, {
+        depth: H.rim.depth - 0.012, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2, curveSegments: 1,
+      }).translate(0, 0, -H.rim.depth / 2 + 0.006) });
+    m.add({ name: `glass${side}`, role: 'glass', parent: frame, print: false, shadow: false,
+      make: () => new THREE.ShapeGeometry(new THREE.Shape(circle(r))).translate(0, 0, -0.005) });
+  }
+  const centre = F.gap / 2 + GLASSES.halfWidth;
+  const chord = (y) => Math.sqrt(R * R - y * y); // half-width of a rim at height y above its centre
+  const endPiece = { ...H.endPiece, height: minLine(H.endPiece.height) };
+  addTemples(m, colour, v, {
+    lensOuter: centre + chord(H.hinge), topY: F.y + H.hinge + endPiece.height / 2, zFront: F.z + H.rim.depth / 2,
+    endPiece,
+    temple: { ...H.temple, thickness: minLine(H.temple.thickness), height: minLine(H.temple.height) },
+  });
+  m.add({
+    name: 'bridge', role: colour, parent: 'head', position: v3(0, F.y + H.bridge.y, F.z),
+    make: () => new THREE.BoxGeometry(2 * (centre - chord(H.bridge.y)) + 0.04, minLine(H.bridge.height), minLine(H.bridge.depth)),
+  });
+}
+
 // A decal projected onto the head's actual surface, kept in head space.
 /** Frame of a decal on the head surface: origin at `at.p`, +Z along `at.n`, spun about Z. */
 function decalFrame(at, spin) {
@@ -1293,7 +1348,7 @@ function bossGeometry({ size: [bw, bh], top, sunk, height }) {
 }
 
 // glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
-export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades };
+export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades, round: addRound };
 
 export const PROPS = {
   tablet: addTablet,
@@ -1426,6 +1481,37 @@ export const PROPS = {
     m.add({ name: 'stopwatchButton', role: 'grey', parent: frame, position: v3(0.12, 0.13, 0),
       quaternion: new THREE.Quaternion().setFromAxisAngle(Z, -0.75),
       make: () => new THREE.CylinderGeometry(0.025, 0.025, 0.05, 16) });
+  },
+
+  // mini panda fresh off the printer: a tiny seated panda on a yellow build
+  // plate, standing on the open right paw (Present pose). Blobs only, each
+  // ≥ 0.85 mm at print size: white body and head, black ears, arms, legs and
+  // eye patches sunk into the head so they print flush
+  miniPanda(m) {
+    const P = { plate: [0.38, 0.06, 0.38], body: [0.13, 0.12, 0.115], head: [0.16, 0.135, 0.135] };
+    const paw = posedJoints('present').pawR.getWorldPosition(new THREE.Vector3());
+    const R = ARM.radii[ARM.radii.length - 1];
+    // upright on the paw, turned a little toward the viewer's side of the figure
+    const frame = worldAnchor(m, 'miniPanda', 'pawR', 'present', paw.clone().add(v3(-0.05, R - 0.035, 0.03)),
+      new THREE.Quaternion().setFromAxisAngle(Y, THREE.MathUtils.degToRad(-12)));
+    const top = P.plate[1]; // heights below are above the plate
+    const headY = top + 2 * P.body[1] - 0.03 + P.head[1];
+    m.add({ name: 'miniPlate', role: 'yellow', parent: frame, position: v3(0, top / 2, 0),
+      make: () => new RoundedBoxGeometry(...P.plate, 4, 0.025) });
+    m.add({ name: 'miniBody', role: 'fur', parent: frame, position: v3(0, top + P.body[1] - 0.01, 0),
+      make: () => ellipsoid(P.body, { detail: 4 }) });
+    m.add({ name: 'miniHead', role: 'fur', parent: frame, position: v3(0, headY, 0.01),
+      make: () => ellipsoid(P.head, { detail: 4 }) });
+    for (const [side, s] of Object.entries(SIDES)) {
+      m.add({ name: `miniEar${side}`, role: 'black', parent: frame, position: v3(s * 0.115, headY + 0.105, -0.01),
+        make: () => ellipsoid([0.055, 0.055, 0.04], { detail: 3 }) });
+      m.add({ name: `miniArm${side}`, role: 'black', parent: frame, position: v3(s * 0.125, top + 0.13, 0.03),
+        make: () => ellipsoid([0.05, 0.085, 0.055], { detail: 3 }) });
+      m.add({ name: `miniLeg${side}`, role: 'black', parent: frame, position: v3(s * 0.08, top + 0.04, 0.07),
+        make: () => ellipsoid([0.065, 0.055, 0.085], { detail: 3 }) });
+      m.add({ name: `miniPatch${side}`, role: 'black', parent: frame, position: v3(s * 0.065, headY + 0.01, 0.1),
+        make: () => ellipsoid([0.042, 0.048, 0.04], { detail: 3 }) });
+    }
   },
 
   // toy rocket lifting off beside the figure (his right), standing on a column
