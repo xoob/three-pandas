@@ -114,11 +114,10 @@ so a new figure looks like it came from the same designer.
 - Max 4 filaments per figure and per plate (`PLATES` in tools/print.mjs):
   white + black + 2 accents. Plan a figure's accents so it can share a plate.
 
-## 4. Learnings from the panda-model test prints
+## 4. Learnings from the test prints
 
-Decisions made on the `panda-model` branch (A1 mini, 0.4 mm nozzle, 0.16 mm
-layers; see its README "Design rules"). They apply here too; where this
-branch went further, the reconciliation is stated.
+Learned from the viewer and from test prints (A1 mini, 0.4 mm nozzle, 0.16 mm
+layers, 40 mm figures). Follow them for new figures, parts, poses and props.
 
 - **One model for viewer and print.** Base, props, decals and inlays are the
   same parts in both; the export only thickens details and turns paint into
@@ -136,16 +135,27 @@ branch went further, the reconciliation is stated.
   changes colour on the surface is paint. Sculpted face pieces lie on the
   face with a rounded lip and reach into the head (`inlay`), so they print
   as supported relief, not as bumps standing off the surface.
+- **Eyes are painted.** Each eye is an eye patch plus one of the eye styles
+  (`EYE_STYLES`, a recipe's `eyes`), flat: a decal on the patch in the
+  viewer (drawn after it) and a white inlay in print. Raised pupils and
+  crescents stood off the face, needed support and printed jittery.
+- **Inlays on curved surfaces reach deeper.** A painted area is a flat 2D
+  shape pushed into the part; where the surface curves away from that plane
+  the inlay must reach further, or its edges go missing. Decals on the head
+  and body get extra depth (`reach`); their outer face is the part's own
+  surface, so they sit flush on the curve.
 - **Decals stay where they belong.** Project a decal only as deep as the
   surface curves under it (else a mouth lands on the chin too); per-pose
   decals (`faces.<pose>.look`) slide along the tangent plane.
 - **No overhangs onto the base.** Floor props are solid down to the base
   (gadget, rocket smoke column), low props rest on it; tree supports are
-  acceptable for raised arms and props held high.
+  acceptable for raised arms and props held high. Leave the support filament
+  to the slicer: forced to black, supports left dark marks where they touch
+  white surfaces.
 - **Minimum sizes.** Details ≥ 0.85 mm; first-layer features ≥ one solid
   line (~0.7 mm; 0.43 mm letter strokes broke up); isolated first-layer dots
-  need ~1 mm (0.72 mm QR modules mostly failed, 1 of 7 scanned — fix
-  pending).
+  need ~1 mm or they get knocked off when the other colour prints (0.72 mm
+  QR modules mostly failed, 1 of 7 scanned; the codes now use ~0.93 mm).
 - **Filament changes cost print time — a trade-off, not a rule.** Every layer
   prints each colour present once plus a purge, so a colour adds changes on
   every layer it spans. Weigh it case by case; the look decides each time
@@ -163,10 +173,13 @@ branch went further, the reconciliation is stated.
 - **Readable from the default angled view.** Turn heads or set `look` so
   both pupils stay visible (an edge-on pupil reads as a closed eye); kicked
   feet point their toes down along the shin.
-- **Base.** Round black plinth, panda 40 mm on top; the underside QR and
-  curved lettering are one white 0.2 mm first layer. The QR links to a short
-  code (the recipe's `codes`, Cloudflare redirects), so targets change without
-  reprinting.
+- **Base.** Round plinth, panda 40 mm on top. The underside carries only a
+  QR code, as large as the flat face allows, black on white on any base
+  colour, as one 0.2 mm first layer (black printed first), with a slower
+  first layer whose travel avoids printed areas. Curved lettering around it
+  (2.7 mm, 0.7 mm strokes) came out garbled and was removed. The QR links to
+  a short code (the recipe's `codes`, Cloudflare redirects), so targets
+  change without reprinting.
 - **Bambu project files** come from Bambu Studio's CLI (`tools/bambu.py`)
   with flattened presets, test-sliced headless; prime tower ~80 × 40 mm,
   figures 12 mm apart — leave room for it when filling a plate.

@@ -29,6 +29,14 @@ Serve `dist/site/` with any static file server, e.g.
 
 ## How the model is built
 
+Passes, each applied on top of the previous one:
+
+1. **Rig** – joints and bones, posed from the pose table
+2. **Blockout** – primitives, one capsule per bone
+3. **Smoothing** – capsules replaced by one tube per limb, interpolated through its joints
+4. **Details** – fur markings, face, snout, glasses and props
+5. **Shading** – colours, shadows, reflections
+
 | File | Contents |
 |---|---|
 | `src/rig.js` | Joint layout, pose parameters (degrees), `POSES`, pose blending (`PoseDriver`), knees, body lean/turn, automatic grounding |
@@ -42,40 +50,22 @@ Serve `dist/site/` with any static file server, e.g.
 | `src/main.js`, `src/shell.html` | The viewer |
 | `src/print.js`, `src/preview.js` | Browser side of the print export |
 
-Passes, each applied on top of the previous one:
+## Add a figure or a pose
 
-1. **Rig** – joints and bones, posed from the pose table
-2. **Blockout** – primitives, one capsule per bone
-3. **Smoothing** – capsules replaced by one tube per limb, interpolated through its joints
-4. **Details** – fur markings, face, snout, glasses and props
-5. **Shading** – colours, shadows, reflections
+[`CLAUDE.md`](CLAUDE.md) is the quick start for a new figure (a recipe in
+`figures/`, parts from the kit, the checks and screenshots), and
+[`docs/design-language.md`](docs/design-language.md) is how figures are
+designed and kept printable: read it before adding a figure, a part or a
+pose.
 
-### Add a pose
-
-Add an entry to `POSES` in `src/rig.js` (only values that differ from
-`NEUTRAL`), then check it:
-
-```sh
-npm run posecheck    # arm-vs-head clearance for every pose
-npm run reach -- L 0.5 1.3 0.45   # arm angles that put a paw at a point
-```
-
-### Add a character
-
-Add `figures/<id>.json` (the format is at the top of `src/recipes.js`;
-`CLAUDE.md` walks through it). New parts go into the kit: hair styles in
-`HAIR` (`src/hair.js`), beards in `BEARDS` (`src/beard.js`), outfits in
-`OUTFITS` (`src/outfit.js`), and glasses styles, props and colours in
-`GLASSES_STYLES`, `PROPS` and `COLOURS` (`src/passes.js`). Then:
+A pose is an entry in `POSES` in `src/rig.js` (only the values that differ
+from `NEUTRAL`):
 
 ```sh
 npm run check        # every recipe against the part library
+npm run posecheck    # arm-vs-head clearance for every pose
+npm run reach -- L 0.5 1.3 0.45   # arm angles that put a paw at a point
 ```
-
-A figure uses at most 4 filaments, white and black included. Its recipe's
-`codes` give each printed pose a unique random 4-digit hex QR code; an
-optional `accent` puts every accessory in one colour, and `spin` turns the
-figure on the stage so its best side shows first.
 
 ## 3D printing
 
@@ -142,75 +132,6 @@ and pose, with a wildcard for the edition), so a target can change at any
 time without reprinting. A recipe keeps every code ever printed, so old
 figures keep working (`npm run check` keeps them unique). The viewer shows
 the same base and QR code (Bottom view).
-
-## Design rules
-
-Learned from the viewer and from test prints (A1 mini, 0.4 mm nozzle, 40 mm
-figures). Follow them for new characters, poses and props.
-
-**One model for viewer and print.** The base, props, decals and inlays are
-the same parts in both; the print export only thickens details and turns
-painted areas into inlays. What the viewer shows is what prints.
-
-**Painted, not raised.** Anything that is only a colour (eye patches, pupils,
-mouths, badge, tablet icon) is a decal on the surface in the viewer and a
-flush inlay in print (0.85 mm deep, `PRINT.inlay`). Raised bumps stand off
-the face and need supports. Reserve 3D shapes for real volumes (nose, ears,
-props).
-
-**Eyes are painted.** Each eye is an eye patch plus one of the eye styles
-(`EYE_STYLES`, a recipe's `eyes`), flat: `open` is a white oval pupil,
-`closed` a white crescent, thick in the middle and pointed at both ends. Each
-is a decal on the patch in the viewer (drawn after it) and a white inlay in
-print. A new eye style must be painted the same way; raised pupils and
-crescents stood off the face, needed support and printed jittery.
-
-**Decals only where they belong.** Project a decal just as deep as the
-surface curves under it, or it also lands on the chin or cheek behind
-(mouth lines size their depth from the curve). Moved decals (pupils looking
-sideways) slide along the surface's tangent plane, not straight across.
-
-**No overhangs that need support from the base.** Props on the floor are
-solid down to the base (the gadget), props held low rest on it (the
-shield's tip). Tree supports are fine for arms and props held up high. Leave
-the support filament to the slicer: forced to black, supports left dark
-marks where they touch white surfaces.
-
-**Minimum sizes.** Details at least 0.85 mm (`PRINT.minLine`, two lines of
-the nozzle). First-layer features at least one solid line (about 0.7 mm):
-thinner strokes break up. Single isolated first-layer dots need about 1 mm
-or they get knocked off when the other colour prints (QR codes with 0.72 mm
-modules mostly failed to scan).
-
-**Colour changes cost the most time.** Every layer prints each colour
-present in it once, with a purge in between, so a colour that appears where
-it otherwise isn't needed adds changes on every layer it spans. Weigh it case
-by case against the look.
-
-**One connected solid per figure.** Everything touches: soles and floor
-props sink into the base (`BASE.sink`), held props overlap the paw. The
-export checks it (`connected_bodies: 1`).
-
-**Readable from the default view.** Turn heads toward the viewer (or set
-`look`) so both pupils stay visible in the angled view; a pupil seen
-edge-on makes the eye look closed. Kicked-up feet point their toes down
-along the shin instead of staying level.
-
-**Base underside.** Only a QR code, as large as the flat face allows,
-black on white on any base colour, as one first layer (0.2 mm; black printed
-first), with a slower first layer whose travel avoids printed areas. Curved
-lettering around it (2.7 mm, 0.7 mm strokes) came out garbled and was
-removed.
-
-**Inlays on curved surfaces reach deeper.** A painted area is a flat 2D
-shape pushed into the part; where the surface curves away from that plane
-the inlay must reach further, or its edges go missing. Decals on the head
-and body get extra depth (`reach`); their outer face is the part's own
-surface, so they sit flush on the curve.
-
-**Check before calling it done.** `npm run posecheck` (arms clear the head),
-`npm run print` (every figure `connected_bodies: 1`, each project slices),
-QR codes decode from the previews, and screenshots of the change.
 
 ## Tools
 

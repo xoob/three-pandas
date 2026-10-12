@@ -7,7 +7,7 @@ judge the screenshots.
 ## The project
 
 Posable panda figures built in code with three.js: primitives and swept tubes
-in five passes (Rig, Blockout, Tubes, Details, Look), viewable in the browser.
+in five passes (Rig, Blockout, Smoothing, Details, Shading), viewable in the browser.
 Each figure is a recipe in `figures/` assembled from a kit of parts, and is also
 exported as a multi-colour 3D print (Bambu A1 mini, at most 4 filaments per plate).
 Everyone stays a panda: identity comes from hair, glasses, beard, outfit, pose
@@ -67,10 +67,10 @@ before moving on. Build, show, take feedback, repeat.
 
 The rules that keep a figure printable (one connected solid, details ≥ 0.85 mm,
 no thin parts in mid-air, painted vs sculpted features, colour changes) are in
-`README.md`, section "Design rules", and in `docs/design-language.md`. Follow
-them; check with `npm run print`.
+`docs/design-language.md`, sections 3 and 4. Follow them; check with
+`npm run print`.
 
 ## Finish
 
 Work on a branch and open a pull request with the screenshots. Never change
-`EDITION`: editions are changed by hand (README, "Editions").
+`EDITION`: editions are changed by hand (README, "Editions and releases").
