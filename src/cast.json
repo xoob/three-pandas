@@ -1,0 +1,7 @@
+[
+  { "id": "detective", "pose": "dance", "base": "white" },
+  { "id": "guardian", "pose": "guard", "base": "white" },
+  { "id": "analyst", "pose": "hooray", "base": "white" },
+  { "id": "listener", "pose": "point", "base": "white" },
+  { "id": "photographer", "pose": "run", "base": "white" }
+]

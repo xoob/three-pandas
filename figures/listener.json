@@ -1,0 +1,13 @@
+{
+  "id": "listener",
+  "label": "Listener",
+  "codes": { "point": "5D5C" },
+  "poses": ["notes", "point"],
+  "eyes": "open",
+  "mouth": "smile",
+  "accent": "green",
+  "props": ["headphones", "notepad", "pencil", "pointerL"],
+  "only": { "pointerL": ["point"] },
+  "hide": { "pencil": ["point"] },
+  "faces": { "point": { "look": [0.04, 0.005] } }
+}

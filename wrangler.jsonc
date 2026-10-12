@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "three-panda",
+  "compatibility_date": "2026-10-06",
+  // static site only: the stage (dist/site/index.html) and the model viewer
+  // (viewer.html); unknown paths (/PHOTOGRAPHER from the first QR codes) serve
+  // the stage, which reads the path
+  "assets": { "directory": "dist/site", "not_found_handling": "single-page-application" },
+  // pandas.xoob.de is printed in the QR codes; panda.xoob.de stays for the early test prints
+  "routes": [
+    { "pattern": "pandas.xoob.de", "custom_domain": true },
+    { "pattern": "panda.xoob.de", "custom_domain": true }
+  ],
+  // Workers Builds runs `npx wrangler preview` for every branch other than main
+  // (a preview per pull request, e.g. a figure branch); it needs this block,
+  // empty: assets and compatibility settings come from the top level
+  "previews": {},
+  // keeps the previews' URLs (<branch>-three-panda.xoob.workers.dev) on: without
+  // it every deploy of main turns them off, as workers.dev itself is off
+  "preview_urls": true
+}

@@ -1,0 +1,6 @@
+# Cloudflare static asset headers (copied to dist/site by build.sh).
+# Nothing has a hashed file name (the pages inline their scripts, the 3MFs
+# keep their names across exports), so browsers check every file with the
+# server on each visit and a deploy shows up on the next load.
+/*
+  Cache-Control: no-cache

@@ -1,0 +1,10 @@
+{
+  "id": "placeholder",
+  "label": "Placeholder",
+  "codes": { "rest": "95B2" },
+  "poses": ["rest"],
+  "eyes": "open",
+  "mouth": "smile",
+  "hologram": true,
+  "props": []
+}

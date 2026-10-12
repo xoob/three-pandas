@@ -1,0 +1,10 @@
+{
+  "id": "photographer",
+  "label": "Photographer",
+  "codes": { "run": "D705" },
+  "poses": ["photo", "run"],
+  "eyes": "closed",
+  "mouth": "grin",
+  "accent": "red",
+  "props": ["camera", "backpack"]
+}

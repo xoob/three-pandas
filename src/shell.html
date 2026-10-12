@@ -1,0 +1,129 @@
+<title>Posable Panda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap">
+<style>
+  /* Layout: full-bleed turntable stage like a model sheet; view label top-left, stats top-right,
+     build-pass stepper plus pose/view/display controls docked along the bottom */
+  :root {
+    --bg: #e8ebf2;
+    --bg-glow: #f7f8fb;
+    --fg: #1a1c24;
+    --muted: #5a6074;
+    --accent: #3a4be4;
+    --accent-soft: rgba(58, 75, 228, 0.14);
+    --on-accent: #ffffff;
+    --panel: rgba(255, 255, 255, 0.82);
+    --line: rgba(26, 28, 36, 0.12);
+    --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1f2330; --bg-glow: #353b4e; --fg: #e9ebf2; --muted: #9ba1b5;
+      --accent: #7d8bff; --accent-soft: rgba(125, 139, 255, 0.2); --on-accent: #10121a;
+      --panel: rgba(30, 33, 44, 0.82); --line: rgba(233, 235, 242, 0.14);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1f2330; --bg-glow: #353b4e; --fg: #e9ebf2; --muted: #9ba1b5;
+    --accent: #7d8bff; --accent-soft: rgba(125, 139, 255, 0.2); --on-accent: #10121a;
+    --panel: rgba(30, 33, 44, 0.82); --line: rgba(233, 235, 242, 0.14);
+    color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); overflow: hidden; }
+
+  .stage {
+    position: relative; height: 100%; overflow: hidden;
+    background: radial-gradient(ellipse 70% 60% at 50% 42%, var(--bg-glow), var(--bg) 75%);
+  }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #gl:active { cursor: grabbing; }
+  #gl:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0; padding: 16px 20px;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; pointer-events: none;
+  }
+  .hud h1 {
+    margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.75rem; line-height: 1;
+    letter-spacing: 0.01em; text-wrap: balance;
+  }
+  .hud .sub { margin: 6px 0 0; font-size: 0.82rem; color: var(--muted); }
+  .stats {
+    font-family: var(--font-display); font-weight: 500; font-size: 0.95rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap;
+  }
+
+  .dock {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 16px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+  }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 100%; }
+  .group {
+    pointer-events: auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 4px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .group button {
+    appearance: none; border: 0; background: transparent; color: var(--fg);
+    font: 600 0.95rem/1 var(--font-display); letter-spacing: 0.05em; text-transform: uppercase;
+    min-height: 38px; padding: 0 12px; border-radius: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .group button:hover { background: var(--line); }
+  .group button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .group button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+  .toggles button::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid currentColor; box-sizing: border-box;
+  }
+  .toggles button[aria-pressed="true"]::before { background: currentColor; }
+
+  /* build passes: earlier passes stay tinted because each one sits on top of them */
+  .passes { flex-wrap: nowrap; width: min(560px, 100%); }
+  .passes button { flex: 1 1 0; min-width: 0; padding: 0 4px; flex-direction: column; gap: 3px; min-height: 44px; }
+  .passes button small { font: 500 0.68rem/1 var(--font-body); letter-spacing: 0.04em; opacity: 0.7; }
+  .passes button.done { background: var(--accent-soft); }
+  .pass-summary {
+    margin: 0; font-size: 0.8rem; color: var(--muted); text-align: center; text-wrap: balance;
+    pointer-events: auto; max-width: 640px;
+  }
+
+  @media (max-width: 520px) {
+    .hud { padding: 14px 16px; }
+    .hud h1 { font-size: 1.45rem; }
+    .group button { padding: 0 8px; font-size: 0.86rem; min-height: 36px; }
+    .passes button { font-size: 0.78rem; letter-spacing: 0.02em; padding: 0 2px; }
+  }
+</style>
+
+<main class="stage" id="stage">
+  <canvas id="gl" aria-label="3D panda model. Drag or use the arrow keys to rotate, pinch or scroll to zoom."></canvas>
+  <div class="hud">
+    <div>
+      <h1 id="view-label" aria-live="polite">Isometric View</h1>
+      <p class="sub">Drag to orbit · pinch or scroll to zoom</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <nav class="dock" aria-label="Viewer controls">
+    <div class="group passes" role="group" aria-label="Build pass" id="passes"></div>
+    <p class="pass-summary" id="pass-summary"></p>
+    <div class="row">
+      <div class="group" role="group" aria-label="Character" id="variants"></div>
+      <div class="group" role="group" aria-label="Pose" id="poses"></div>
+      <div class="group" role="group" aria-label="Camera view" id="views"></div>
+      <div class="group toggles" role="group" aria-label="Display">
+        <button type="button" id="t-spin" data-toggle="spin" aria-pressed="false">Spin</button>
+        <button type="button" id="t-motion" data-toggle="motion" aria-pressed="false">Motion</button>
+        <button type="button" id="t-wire" data-toggle="wire" aria-pressed="false">Wire</button>
+        <button type="button" id="t-bones" data-toggle="bones" aria-pressed="false">Bones</button>
+      </div>
+    </div>
+  </nav>
+</main>
+<!--APP-->

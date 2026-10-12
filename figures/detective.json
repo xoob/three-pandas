@@ -1,0 +1,12 @@
+{
+  "id": "detective",
+  "label": "Detective",
+  "codes": { "dance": "D155" },
+  "poses": ["inspect", "dance"],
+  "eyes": "open",
+  "mouth": "smile",
+  "accent": "yellow",
+  "props": ["magnifier", "watch", "pointer"],
+  "hide": { "pointer": ["dance"] },
+  "faces": { "dance": { "look": [-0.02, 0.01] } }
+}

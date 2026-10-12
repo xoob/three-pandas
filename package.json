@@ -1,0 +1,27 @@
+{
+  "name": "three-panda",
+  "version": "1.0.0",
+  "description": "Friends of BigPanda: posable panda figures built in code with three.js, shown on a live stage and exported as multi-colour 3D prints for Bambu Studio",
+  "private": true,
+  "scripts": {
+    "build": "sh build.sh",
+    "check": "node tools/check.mjs",
+    "posecheck": "node tools/posecheck.mjs",
+    "print": "sh build.sh && node tools/print.mjs print-out && python3 tools/bambu.py print-out",
+    "shots": "node tools/shots.mjs",
+    "release": "node tools/release.mjs",
+    "deploy": "sh build.sh && wrangler deploy",
+    "reach": "node tools/reach.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "manifold-3d": "^3.5.4",
+    "playwright-core": "^1.63.0",
+    "qrcode-generator": "^2.0.4",
+    "three": "^0.186.1"
+  },
+  "type": "module",
+  "devDependencies": {
+    "wrangler": "^4.147.0"
+  }
+}

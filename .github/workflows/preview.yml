@@ -1,0 +1,105 @@
+# Figure preview: on every pull request, check the recipes and poses, render
+# the figures the PR changes (all of them when it changes the kit or tools),
+# print-export each one whole in its signature pose and post one comment with
+# the previews, updated on every push. Images are pushed to the `previews` branch (pr-<n>/<sha>/) because the
+# comment API can't attach files.
+name: Figure preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# one run per PR: a new push cancels the PR's older run (runs of different
+# PRs go side by side; their pushes to `previews` retry on a race)
+concurrency:
+  group: figure-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      SHA: ${{ github.event.pull_request.head.sha }}
+      BRANCH: ${{ github.event.pull_request.head.ref }} # names the Cloudflare preview
+      BASE: ${{ github.event.pull_request.base.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run build
+      - run: npm run check
+      - run: npm run posecheck
+
+      - name: Figures to preview
+        id: figures
+        run: |
+          changed=$(git diff --name-only --diff-filter=d "$BASE"...HEAD -- 'figures/*.json' | xargs -r -n1 basename | sed 's/\.json$//' | tr '\n' ' ')
+          if ! git diff --quiet "$BASE"...HEAD -- src tools build.sh; then
+            changed=$(node -e "console.log(require('./dist/figures.json').map((r) => r.id).join(' '))")
+          fi
+          echo "ids=$changed" >> "$GITHUB_OUTPUT"
+          echo "Previewing: ${changed:-nothing}"
+          # holograms (placeholders) are never printed
+          printed=$(node -e "const r = require('./dist/figures.json'); console.log(process.argv.slice(1).filter((id) => !r.find((x) => x.id === id).hologram).join(' '))" $changed)
+          echo "printed=$printed" >> "$GITHUB_OUTPUT"
+
+      - name: Print export
+        if: steps.figures.outputs.printed != ''
+        run: node tools/print.mjs print-out ${{ steps.figures.outputs.printed }}
+
+      - name: Render previews
+        if: steps.figures.outputs.ids != ''
+        run: |
+          node tools/preview.mjs previews ${{ steps.figures.outputs.ids }}
+          for id in ${{ steps.figures.outputs.printed }}; do
+            cp print-out/preview-"$id"-*-white-iso.png "previews/print-$id.png"
+          done
+
+      - name: Publish to the previews branch
+        if: steps.figures.outputs.ids != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin previews > /dev/null; then
+            git fetch origin previews
+            git worktree add -B previews pub FETCH_HEAD
+          else
+            git worktree add --orphan -b previews pub
+          fi
+          dir="pr-$PR/${SHA::7}"
+          mkdir -p "pub/$dir"
+          cp previews/*.png "pub/$dir/"
+          git -C pub add "$dir"
+          git -C pub commit -m "Previews for #$PR at ${SHA::7}"
+          # another PR's run may have pushed meanwhile: replay on top and retry
+          for attempt in 1 2 3 4 5; do
+            git -C pub push origin previews && break
+            [ "$attempt" = 5 ] && exit 1
+            git -C pub pull --rebase origin previews
+          done
+          echo "IMAGES=https://github.com/${{ github.repository }}/blob/previews/$dir" >> "$GITHUB_ENV"
+
+      - name: Comment
+        if: steps.figures.outputs.ids != ''
+        run: |
+          node tools/preview-comment.mjs "$IMAGES" "$SHA" "$BRANCH" ${{ steps.figures.outputs.ids }} > comment.md
+          id=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- figure-preview -->")) | .id' | head -n1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@comment.md
+          else
+            gh pr comment "$PR" --body-file comment.md
+          fi

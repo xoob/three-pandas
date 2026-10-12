@@ -1,0 +1,11 @@
+{
+  "id": "guardian",
+  "label": "Guardian",
+  "codes": { "guard": "06E8" },
+  "poses": ["guard"],
+  "eyes": "open",
+  "mouth": "smile",
+  "accent": "grey",
+  "props": ["shield", "warnFinger"],
+  "faces": { "guard": { "look": [0.03, 0.005] } }
+}

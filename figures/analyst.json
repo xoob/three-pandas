@@ -1,0 +1,13 @@
+{
+  "id": "analyst",
+  "label": "Analyst",
+  "codes": { "puzzled": "30EA", "wave": "A7AC", "hooray": "E9CA" },
+  "poses": ["wave", "puzzled"],
+  "eyes": "closed",
+  "mouth": "smile",
+  "accent": "blue",
+  "glasses": { "style": "octagon", "colour": "blue" },
+  "props": ["tablet", "badge", "gadget"],
+  "only": { "gadget": ["puzzled"] },
+  "faces": { "puzzled": { "mouth": "frown" } }
+}

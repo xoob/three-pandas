@@ -1,0 +1,329 @@
+<title>Friends of BigPanda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap">
+<style>
+  /* The gang on a dark stage under one warm spotlight: each figure is its own
+     WebGL canvas laid out by CSS, so selection, dimming and the phone layout
+     are plain CSS transitions. Controls are glass chrome along the bottom. */
+  /* --chrome: iOS 26 Safari tints its toolbars with the body's background colour (no
+     gradients, theme-color is ignored), so the stage fades into it at the top and bottom */
+  :root { --chrome: #141210; }
+  html, body { height: 100%; background: var(--chrome); }
+  /* an app, not a document: no double-tap zoom (pinch is blocked in stage.js, the viewport meta in build.sh) */
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+  body { overflow: hidden; color-scheme: dark; }
+  a { color: #9db8ff; }
+  a:hover { color: #c4d4ff; }
+  [hidden] { display: none !important; }
+  .stage {
+    /* clip, not hidden: focusing a figure must never scroll the stage */
+    position: relative; width: 100%; height: 100%; min-height: 560px; overflow: clip; color: #f3efe9; background: #0d0b0a;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Instrument Serif", "Iowan Old Style", Georgia, serif; font-weight: 400; }
+  button { font: inherit; }
+  :focus-visible { outline: 2px solid #6f9cff; outline-offset: 2px; }
+
+  /* stage light */
+  .bg { position: absolute; inset: 0; background: radial-gradient(55% 45% at 10% -8%, rgba(126,152,214,.16), rgba(126,152,214,0) 70%), radial-gradient(55% 45% at 90% -8%, rgba(214,176,138,.12), rgba(214,176,138,0) 70%), radial-gradient(70% 60% at 50% 42%, #2a2420 0%, #1a1614 48%, #0d0b0a 100%); }
+  .beam { position: absolute; left: 50%; top: -8%; width: 1240px; height: 74%; transform: translateX(-50%); filter: blur(30px); transition: opacity .7s ease; pointer-events: none; animation: breathe 11s ease-in-out infinite; }
+  .beam .cone { width: 100%; height: 100%; clip-path: polygon(41% 0, 59% 0, 100% 100%, 0 100%); background: linear-gradient(to bottom, rgba(255,238,214,.05), rgba(255,238,214,.14) 55%, rgba(255,238,214,0) 100%); }
+  .stage.has-sel .beam { opacity: .28; animation: none; }
+  .floor { position: absolute; left: -10%; right: -10%; top: 61%; bottom: 0; background: radial-gradient(48% 90% at 50% 0%, rgba(255,226,190,.16), rgba(255,226,190,0) 70%), linear-gradient(to bottom, #28221f 0%, #181412 42%, #0d0b0a 100%); transition: top .6s cubic-bezier(.2,.8,.2,1); }
+  .lip { position: absolute; left: 0; right: 0; top: 61%; height: 1px; background: linear-gradient(90deg, rgba(255,240,220,0), rgba(255,240,220,.12) 50%, rgba(255,240,220,0)); box-shadow: 0 0 28px 3px rgba(255,226,190,.05); transition: top .6s cubic-bezier(.2,.8,.2,1); }
+  .pool { position: absolute; left: 50%; bottom: 150px; width: min(1240px, 94%); height: 230px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255,230,200,.24), rgba(255,230,200,0)); transition: opacity .7s ease, bottom .6s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+  .stage.has-sel .pool { opacity: .5; }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(85% 78% at 50% 56%, rgba(0,0,0,0) 48%, rgba(0,0,0,.62) 100%); pointer-events: none; }
+  .edges { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, var(--chrome), transparent 64px), linear-gradient(to top, var(--chrome), transparent 48px); }
+  .grain { position: absolute; inset: 0; opacity: .055; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: .86; } }
+  @keyframes sheetIn { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+
+  /* the gang */
+  .gang { position: absolute; left: 50%; bottom: 196px; width: min(1360px, 96%); transform: translateX(-50%); transform-origin: bottom center; transition: bottom .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1); }
+  .stage.pipe-open .gang { bottom: 516px; transform: translateX(-50%) scale(.7); }
+  .stage.pipe-open .pool { bottom: 476px; }
+  .stage.pipe-open .floor, .stage.pipe-open .lip { top: 40%; }
+  .row { display: flex; justify-content: center; align-items: flex-end; transition: transform .75s cubic-bezier(.2,.8,.2,1); }
+  .fig { all: unset; position: relative; display: block; box-sizing: border-box; cursor: pointer; margin: 0 -1.8%; --base-lift: 0px; --extra: 0px; --s: 1; transform: translateY(calc(-1 * (var(--base-lift) + var(--extra)))) scale(var(--s)); transform-origin: bottom center; transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .5s ease, filter .5s ease; -webkit-tap-highlight-color: transparent; }
+  .fig:focus-visible { outline: 2px solid #6f9cff; outline-offset: 10px; border-radius: 28px; }
+  .p1, .p5 { width: 18%; --base-lift: 44px; z-index: 1; }
+  .p2, .p4 { width: 21%; --base-lift: 18px; z-index: 2; }
+  .p3 { width: 26%; z-index: 3; }
+  .fig.is-sel { --extra: 16px; --base-lift: 0px; --s: 1.08; z-index: 5; }
+  .p2.is-sel, .p4.is-sel { --s: 1.24; }
+  .p1.is-sel, .p5.is-sel { --s: 1.4; }
+  /* dimmed figures get less light in their own scene (stage.js), so nothing shows through them */
+  .fig.is-dim { filter: saturate(.6); --s: .95; --extra: -6px; }
+  .fig.is-dim canvas.refl { opacity: .05; }
+  .fig canvas { display: block; width: 100%; aspect-ratio: 480 / 560; }
+  .fig canvas.refl { position: absolute; left: 0; top: 100%; transform: scaleY(-1); opacity: .12; filter: blur(1px); -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 24%); mask-image: linear-gradient(to top, #000 0%, transparent 24%); pointer-events: none; }
+  .fpool { position: absolute; left: 0; right: 0; bottom: -5%; height: 24%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,236,206,.18), rgba(255,236,206,0)); opacity: 0; transition: opacity .5s ease; pointer-events: none; }
+  .fig.is-sel .fpool { opacity: 1; background: radial-gradient(closest-side, rgba(255,236,206,.42), rgba(255,236,206,0)); }
+  .fbeam { position: absolute; left: 50%; bottom: 48%; width: 160%; height: 200%; transform: translateX(-50%); filter: blur(16px); opacity: 0; transition: opacity .7s ease; z-index: -1; pointer-events: none; }
+  .fbeam .cone { width: 100%; height: 100%; clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%); background: linear-gradient(to bottom, rgba(255,238,214,.03), rgba(255,238,214,.17)); }
+  .fig.is-sel .fbeam { opacity: 1; }
+  .tag { position: absolute; left: -40%; right: -40%; bottom: -54px; text-align: center; opacity: 0; transform: translateY(6px); transition: opacity .4s ease, transform .4s ease; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .fig.is-sel .tag { opacity: 1; transform: none; }
+  /* hover only where there is a real pointer: a tap on a phone would leave it stuck */
+  @media (hover: hover) {
+    .fig:hover { --extra: 8px; }
+    .fig.is-sel:hover { --extra: 16px; }
+    .fig.is-dim:hover { --extra: 0px; }
+    .fig:hover .fpool { opacity: .7; }
+    .fig:hover .tag { opacity: .75; transform: none; }
+  }
+  .tag .nm { font-size: 30px; line-height: 1; letter-spacing: -.01em; color: #f7f2ea; text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+  .tag .ps { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #b8aea2; }
+
+  /* next edition: empty spotlit spots */
+  .slot { position: relative; display: block; box-sizing: border-box; margin: 0 -1.8%; --base-lift: 0px; transform: translateY(calc(-1 * var(--base-lift))); animation: sheetIn .6s cubic-bezier(.2,.8,.2,1) both; }
+  .slot .ph { position: relative; width: 100%; aspect-ratio: 480 / 320; }
+  .slot .ring { position: absolute; left: 10%; right: 10%; bottom: 5%; height: 30%; border-radius: 50%; border: 1.5px dashed rgba(255,240,220,.34); background: radial-gradient(closest-side, rgba(255,236,206,.14), rgba(255,236,206,0)); }
+  .slot .glow { position: absolute; left: -8%; right: -8%; bottom: -10%; height: 56%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,236,206,.16), rgba(255,236,206,0)); }
+  .slot .sil { position: absolute; left: 28%; right: 28%; bottom: 30%; height: 70%; border-radius: 46% 46% 40% 40%; background: radial-gradient(60% 60% at 50% 30%, rgba(255,240,220,.06), rgba(255,240,220,0)); }
+  /* The invite stands on its own: above the row of empty spots while the next
+     edition has no panda (is-team), under the header once pandas stand on stage. */
+  .invite { position: absolute; left: 50%; translate: -50% 0; z-index: 4; box-sizing: border-box; width: min(560px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 0 16px; animation: inviteIn .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes inviteIn { from { opacity: 0; translate: -50% 12px; } to { opacity: 1; translate: -50% 0; } } /* sheetIn's translate would undo the centring */
+  .stage.is-team .invite { bottom: calc(196px + min(1360px, 96vw) * .1733 + 36px); } /* .gang bottom + the centre spot's height */
+  .stage:not(.is-team) .invite { top: 92px; gap: 6px; }
+  .stage:not(.is-team) .invite .big { font-size: 34px; }
+  .invite .big { font-size: 46px; line-height: 1.05; letter-spacing: -.01em; color: #f7f2ea; text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+  .invite p { margin: 0; font-size: 14px; line-height: 1.5; color: #c2b8ab; max-width: 440px; text-wrap: pretty; }
+  .invite .pill { margin-top: 8px; }
+
+  /* glass chrome */
+  .glass { background: rgba(26,22,20,.64); backdrop-filter: blur(40px) saturate(1.6); -webkit-backdrop-filter: blur(40px) saturate(1.6); box-shadow: 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.07), 0 28px 70px rgba(0,0,0,.55); }
+  .dock { position: absolute; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 6px; border-radius: 22px; z-index: 20; white-space: nowrap; }
+  .dock .txt { padding: 0 12px; display: flex; flex-direction: column; line-height: 1.25; }
+  .dock .txt b { font-size: 13px; font-weight: 600; }
+  .dock .txt span { font-size: 11px; color: #aaa094; }
+  .dock .dock-name { padding: 0 14px 0 4px; min-width: 110px; }
+  .sep { width: 1px; height: 22px; background: rgba(255,255,255,.12); margin: 0 6px; flex: none; }
+  .ib { all: unset; box-sizing: border-box; width: 44px; height: 44px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #efe9e1; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+  .ib:hover { background: rgba(255,255,255,.09); }
+  .ib:active { transform: scale(.94); }
+  .ib.on { background: rgba(255,255,255,.13); }
+  .ib:focus-visible { outline: 2px solid #6f9cff; outline-offset: 2px; }
+  .pill { all: unset; box-sizing: border-box; height: 38px; padding: 0 16px 0 14px; border-radius: 13px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #f3efe9; background: rgba(255,255,255,.10); cursor: pointer; transition: background .2s ease, color .2s ease, transform .2s ease; white-space: nowrap; }
+  .pill:hover { background: rgba(255,255,255,.16); color: #f3efe9; }
+  .pill:active { transform: scale(.97); }
+  .pill.on, .pill.primary { background: #f3efe9; color: #0d0b0a; }
+  .pill.on:hover, .pill.primary:hover { background: #fff; color: #0d0b0a; }
+  .pill:focus-visible { outline: 2px solid #6f9cff; outline-offset: 2px; }
+  .pill .gh { width: 16px; height: 16px; display: block; }
+  .pill .ext { opacity: .6; display: block; }
+  .chip { all: unset; box-sizing: border-box; height: 34px; padding: 0 14px; border-radius: 11px; display: flex; align-items: center; font-size: 13px; font-weight: 500; color: #e9e2d9; background: rgba(255,255,255,.07); cursor: pointer; transition: background .2s ease, color .2s ease; white-space: nowrap; }
+  .chip:hover { background: rgba(255,255,255,.12); }
+  .chip.on { background: #f3efe9; color: #0d0b0a; }
+  .chip:focus-visible { outline: 2px solid #6f9cff; outline-offset: 2px; }
+  .seg { display: flex; gap: 3px; padding: 3px; border-radius: 13px; background: rgba(255,255,255,.06); width: fit-content; }
+  .seg .chip { height: 30px; border-radius: 10px; background: transparent; }
+  .seg .chip.on { background: #f3efe9; }
+  .sw { all: unset; box-sizing: border-box; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset 0 -2px 4px rgba(0,0,0,.25); transition: transform .2s ease, box-shadow .2s ease; }
+  .sw:hover { transform: scale(1.08); }
+  .sw.on { box-shadow: 0 0 0 2px #1a1614, 0 0 0 4px #f3efe9, inset 0 -2px 4px rgba(0,0,0,.25); }
+  .sw:focus-visible { outline: 2px solid #6f9cff; outline-offset: 5px; }
+  .lbl { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #aaa094; }
+  .field { display: flex; flex-direction: column; gap: 10px; }
+  .options { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* sheets */
+  .sheet { position: absolute; box-sizing: border-box; border-radius: 24px; z-index: 10; animation: sheetIn .42s cubic-bezier(.2,.8,.2,1) both; }
+  .sheet-pipe { left: 50%; bottom: calc(104px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(760px, calc(100% - 32px)); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .sheet-cz { left: calc(50% + 48px); bottom: calc(168px + env(safe-area-inset-bottom)); width: 380px; padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+  .pipe-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; padding: 0 8px; flex-wrap: wrap; }
+  .pipe-head .who { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+  .pipe-head .who span:last-child { font-size: 13px; color: #c2b8ab; }
+  .pipe-head .mono { font-size: 11px; color: #aaa094; white-space: nowrap; }
+  .intro { margin: 0; padding: 0 8px; font-size: 13px; line-height: 1.5; color: #c2b8ab; text-wrap: pretty; }
+  .intro code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; color: #f3efe9; padding: 1px 5px; border-radius: 5px; background: rgba(255,255,255,.08); }
+  .thumbs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  /* the highlight starts at the frame's top edge, with the frame's corner radius */
+  .thumb { all: unset; box-sizing: border-box; justify-self: center; width: 100%; max-width: 104px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 0 10px; border-radius: 12px; cursor: pointer; transition: background .2s ease; color: #b9b0a6; }
+  .thumb:hover { background: rgba(255,255,255,.06); }
+  .thumb.on { background: rgba(255,255,255,.09); color: #f3efe9; }
+  .thumb:focus-visible { outline: 2px solid #6f9cff; outline-offset: 2px; }
+  .thumb .fr { width: 100%; aspect-ratio: 480 / 560; border-radius: 12px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); overflow: hidden; display: flex; align-items: flex-end; justify-content: center; transition: box-shadow .2s ease; }
+  .thumb.on .fr { box-shadow: inset 0 0 0 1.5px rgba(243,239,233,.9); }
+  .thumb .fr img { display: block; width: 100%; aspect-ratio: 480 / 560; transform: translateY(-7%); } /* lift the figure off the frame's bottom edge */
+  .thumb .tl { display: flex; align-items: baseline; gap: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .thumb .tn { font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #8c8379; font-variant-numeric: tabular-nums; }
+  .thumb.on .tn { color: #aaa094; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  /* every pass's notes share one grid cell, so the sheet keeps the tallest one's height */
+  .tech-stack { display: grid; }
+  .tech { grid-area: 1 / 1; display: flex; flex-direction: column; gap: 8px; padding: 4px 8px 0; }
+  .tech.off { visibility: hidden; }
+  .tech-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .tech .path { font-size: 11px; color: #f3efe9; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,.08); }
+  .tech-line { font-size: 13px; color: #e9e2d9; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .spec { font-size: 11px; line-height: 1; padding: 5px 8px; border-radius: 7px; color: #cfc6ba; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .cz-head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cz-head > div { display: flex; flex-direction: column; gap: 6px; }
+  .cz-head .serif { font-size: 30px; line-height: 1; letter-spacing: -.01em; }
+  .cz-head .ib { width: 34px; height: 34px; border-radius: 11px; background: rgba(255,255,255,.07); }
+  .cz-colours { display: flex; gap: 28px; flex-wrap: wrap; }
+  .cz-colours .options { gap: 10px; }
+
+  /* more menu */
+  .menu { position: absolute; left: 50%; bottom: calc(94px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: 296px; padding: 6px; border-radius: 20px; z-index: 30; display: flex; flex-direction: column; gap: 2px; animation: sheetIn .28s cubic-bezier(.2,.8,.2,1) both; }
+  .mi { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: 14px; cursor: pointer; color: #f3efe9; transition: background .15s ease; }
+  .mi:hover { background: rgba(255,255,255,.09); color: #f3efe9; }
+  .mi:focus-visible { outline: 2px solid #6f9cff; outline-offset: -2px; }
+  .mi .ic { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  .mi .ic img { width: 36px; height: 36px; display: block; }
+  .mi .ic.claude { background: #d97757; color: #fff; }
+  .mi .ic.gh { background: #d6d0c8; color: #0d0b0a; }
+  .mi .t { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+  .mi .t b { font-size: 14px; font-weight: 600; }
+  .mi .t span { font-size: 12px; color: #aaa094; }
+  .mi .ext { margin-left: auto; padding-left: 8px; color: #aaa094; flex: none; display: block; }
+
+  .brand { position: absolute; left: 36px; top: calc(26px + env(safe-area-inset-top)); display: flex; align-items: center; gap: 16px; z-index: 5; }
+  .brand h1 { margin: 0; font-size: 28px; line-height: 1; letter-spacing: -.01em; color: #f7f2ea; }
+  .brand .chip { height: 28px; padding: 0 11px; font-size: 12px; font-weight: 600; color: #d9d1c6; }
+  .brand .chip.on { color: #0d0b0a; }
+
+  /* iPhone: the hero front and centre, the others on a semicircle behind; sheets stack */
+  @media (max-width: 600px) {
+    .brand { left: 0; right: 0; top: calc(18px + env(safe-area-inset-top)); flex-direction: column; align-items: center; gap: 10px; }
+    .brand h1 { font-size: 24px; }
+    .beam { width: 720px; top: -4%; }
+    .gang { bottom: 176px; width: calc(100% - 12px); }
+    .stage.pipe-open .gang { bottom: 360px; transform: translateX(-50%) scale(.7); }
+    .stage.cz-open .gang { bottom: 456px; transform: translateX(-50%) scale(.62); }
+    .pool { bottom: 140px; height: 150px; }
+    .stage.pipe-open .pool { bottom: 330px; height: 110px; }
+    .stage.cz-open .pool { bottom: 430px; height: 110px; }
+    .floor, .lip { top: 58%; }
+    .stage.pipe-open .floor, .stage.pipe-open .lip { top: 52%; }
+    .stage.cz-open .floor, .stage.cz-open .lip { top: 40%; }
+    /* the sheet stays small so the stage stays visible: the intro scrolls inside three lines, no tech notes */
+    .intro { font-size: 12px; line-height: 1.45; max-height: calc(3 * 1.45em); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2em), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2em), transparent); }
+    .intro::-webkit-scrollbar { display: none; }
+    .intro.end { -webkit-mask-image: none; mask-image: none; }
+    .tech-stack { display: none; }
+    .row { display: block; position: relative; height: 300px; transform: none !important; touch-action: none; } /* one finger turns the carousel, two turn the panda in front (stage.js) */
+    .row .fig, .row .slot { position: absolute; margin: 0; --base-lift: 0px; --extra: 0px; --s: 1; transform: translate(-50%, calc(-1 * var(--extra))) scale(var(--s)); transition: left .7s cubic-bezier(.2,.8,.2,1), bottom .7s cubic-bezier(.2,.8,.2,1), width .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1), opacity .6s ease, filter .6s ease; }
+    /* the figures stand on a carousel: stage.js places them on the ring every frame
+       (left, bottom, z-index, --ring), so only colour changes are CSS transitions */
+    .row .fig { width: 60%; transform: translate(-50%, calc(-1 * var(--extra))) scale(calc(var(--s) * var(--ring, 1))); transition: opacity .6s ease, filter .6s ease; }
+    .row .m-hero { left: 50%; bottom: 0; width: 60%; z-index: 5; }
+    .row .m-b1 { left: 11%; bottom: 38%; width: 28%; z-index: 1; }
+    .row .m-b2 { left: 26%; bottom: 27%; width: 31%; z-index: 2; }
+    .row .m-b3 { left: 74%; bottom: 27%; width: 31%; z-index: 2; }
+    .row .m-b4 { left: 89%; bottom: 38%; width: 28%; z-index: 1; }
+    .row .fig.m-back { filter: saturate(.75); }
+    .row .fig.m-hero .tag { opacity: 1; transform: none; } /* the figure in front always shows its name */
+    .row .fig.m-back canvas.refl { opacity: .03; }
+    .row .fig.m-back .tag, .row .fig.m-back .fbeam { display: none; }
+    .row .fig.is-dim { filter: saturate(.55); }
+    .row .fig.is-sel { --extra: 8px; --s: 1.03; }
+    .row .slot.m-back { opacity: .6; }
+    .tag { bottom: -46px; }
+    .tag .nm { font-size: 24px; }
+    /* next edition: the empty spots sit lower and flatter, leaving the invite room below the header */
+    .stage.is-team .gang { bottom: calc(110px + env(safe-area-inset-bottom)); }
+    .stage.is-team .row { height: 210px; }
+    .invite { gap: 8px; }
+    .invite .lbl { display: none; } /* the edition switch above already says it */
+    .invite .big { font-size: 34px; }
+    .invite p { font-size: 13px; }
+    .stage.is-team .invite { bottom: calc(110px + 210px + 12px + env(safe-area-inset-bottom)); } /* above the empty spots' row */
+    .stage:not(.is-team) .invite { top: calc(100px + env(safe-area-inset-top)); }
+    .stage:not(.is-team) .invite .big { font-size: 28px; }
+    .sheet-pipe { bottom: calc(96px + env(safe-area-inset-bottom)); padding: 14px 12px; gap: 10px; }
+    .sheet-cz { left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); width: calc(100% - 24px); padding: 18px 18px 16px; gap: 16px; }
+    .cz-colours { gap: 20px; } /* five accents and three bases on one row */
+    .cz-colours .options { gap: 8px; }
+    .sw { width: 28px; height: 28px; }
+    .thumb { padding: 0 0 8px; gap: 6px; border-radius: 10px; }
+    .thumb .fr { border-radius: 10px; }
+    .thumb .tl { font-size: 11px; }
+    .thumb .tn { display: none; } /* no room for the step numbers next to "Smoothing" */
+    .dock { bottom: calc(24px + env(safe-area-inset-bottom)); gap: 0; padding: 5px; }
+    .dock .txt span.sub { display: none; }
+    .dock .dock-name { min-width: 0; padding: 0 10px 0 2px; }
+    .dock .pill { padding: 0 12px 0 10px; }
+    .dock .sep { margin: 0 3px; }
+    .menu { bottom: calc(90px + env(safe-area-inset-bottom)); width: calc(100% - 48px); max-width: 320px; }
+  }
+  /* short phones (SE, mini): the gang shrinks further to stay clear of the header above the Customize sheet */
+  @media (max-width: 600px) and (max-height: 740px) {
+    .stage:not(.is-team) .invite p { display: none; } /* short phones: title and button only above the pandas */
+    .stage.cz-open .gang { bottom: 430px; transform: translateX(-50%) scale(.46); }
+    .stage.cz-open .pool { bottom: 410px; height: 80px; }
+    .stage.cz-open .floor, .stage.cz-open .lip { top: 30%; }
+  }
+  @media (max-width: 360px) {
+    .thumb .tl { font-size: 9.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .beam { animation: none; }
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+
+<main class="stage" id="stage">
+  <div class="bg" aria-hidden="true"></div>
+  <div class="beam" aria-hidden="true"><div class="cone"></div></div>
+  <div class="floor" aria-hidden="true"></div>
+  <div class="lip" aria-hidden="true"></div>
+  <div class="pool" aria-hidden="true"></div>
+
+  <header class="brand">
+    <h1 class="serif">Friends of BigPanda</h1>
+    <div class="seg" role="group" aria-label="Edition">
+      <button type="button" class="chip" data-act="edition" data-edition="gang">Edition 1 · The gang</button>
+      <button type="button" class="chip" data-act="edition" data-edition="next">Next Edition · The ADR Team</button>
+    </div>
+  </header>
+
+  <div class="gang">
+    <div class="row" id="row"></div>
+  </div>
+
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="edges" aria-hidden="true"></div>
+
+  <div class="invite" id="invite" hidden>
+      <span class="lbl">Next Edition · The ADR Team</span>
+      <span class="big serif">Your panda goes here</span>
+      <p>Fork the repo, give your panda a pose and props, and it joins the next edition.</p>
+      <a class="pill primary" href="https://github.com/xoob/three-panda" target="_blank" rel="noopener">
+        <svg class="gh" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+        Contribute on GitHub
+        <svg class="ext" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="opens in a new tab"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path></svg>
+      </a>
+  </div>
+
+  <section class="sheet sheet-pipe glass" id="pipeline" aria-label="How it's built" hidden></section>
+  <section class="sheet sheet-cz glass" id="customize" aria-label="Customize" hidden></section>
+
+  <div class="menu glass" id="menu" role="menu" aria-label="More" hidden>
+    <a class="mi" role="menuitem" id="bambu" data-act="close-menu">
+      <span class="ic"><img src="icons/bambu-studio.png" alt=""></span>
+      <span class="t"><b>Print in Bambu Studio</b><span id="bambu-file"></span></span>
+      <svg class="ext" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="downloads the 3MF"><path d="M12 4v11"></path><path d="M7 10.5l5 5 5-5"></path><path d="M5 20h14"></path></svg>
+    </a>
+    <a class="mi" role="menuitem" id="claude" target="_blank" rel="noopener" data-act="close-menu">
+      <span class="ic claude"><svg width="21" height="21" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path d="m19.6 66.5 19.7-11 .3-1-.3-.5h-1l-3.3-.2-11.2-.3L14 53l-9.5-.5-2.4-.5L0 49l.2-1.5 2-1.3 2.9.2 6.3.5 9.5.6 6.9.4L38 49.1h1.6l.2-.7-.5-.4-.4-.4L29 41l-10.6-7-5.6-4.1-3-2-1.5-2-.6-4.2 2.7-3 3.7.3.9.2 3.7 2.9 8 6.1L37 36l1.5 1.2.6-.4.1-.3-.7-1.1L33 25l-6-10.4-2.7-4.3-.7-2.6c-.3-1-.4-2-.4-3l3-4.2L28 0l4.2.6L33.8 2l2.6 6 4.1 9.3L47 29.9l2 3.8 1 3.4.3 1h.7v-.5l.5-7.2 1-8.7 1-11.2.3-3.2 1.6-3.8 3-2L61 2.6l2 2.9-.3 1.8-1.1 7.7L59 27.1l-1.5 8.2h.9l1-1.1 4.1-5.4 6.9-8.6 3-3.5L77 13l2.3-1.8h4.3l3.1 4.7-1.4 4.9-4.4 5.6-3.7 4.7-5.3 7.1-3.2 5.7.3.4h.7l12-2.6 6.4-1.1 7.6-1.3 3.5 1.6.4 1.6-1.4 3.4-8.2 2-9.6 2-14.3 3.3-.2.1.2.3 6.4.6 2.8.2h6.8l12.6 1 3.3 2 1.9 2.7-.3 2-5.1 2.6-6.8-1.6-16-3.8-5.4-1.3h-.8v.4l4.6 4.5 8.3 7.5L89 80.1l.5 2.4-1.3 2-1.4-.2-9.2-7-3.6-3-8-6.8h-.5v.7l1.8 2.7 9.8 14.7.5 4.5-.7 1.4-2.6 1-2.7-.6-5.8-8-6-9-4.7-8.2-.5.4-2.9 30.2-1.3 1.5-3 1.2-2.5-2-1.4-3 1.4-6.2 1.6-8 1.3-6.4 1.2-7.9.7-2.6v-.2H49L43 72l-9 12.3-7.2 7.6-1.7.7-3-1.5.3-2.8L24 86l10-12.8 6-7.9 4-4.6-.1-.5h-.3L17.2 77.4l-4.7.6-2-2 .2-3 1-1 8-5.5Z"></path></svg></span>
+      <span class="t"><b>Open in Claude</b><span>Make your own panda</span></span>
+      <svg class="ext" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="opens in a new tab"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path></svg>
+    </a>
+    <a class="mi" role="menuitem" href="https://github.com/xoob/three-panda" target="_blank" rel="noopener" data-act="close-menu">
+      <span class="ic gh"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg></span>
+      <span class="t"><b>Contribute on GitHub</b><span>xoob/three-panda</span></span>
+      <svg class="ext" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="opens in a new tab"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"></path></svg>
+    </a>
+  </div>
+
+  <nav class="dock glass" id="dock" aria-label="Stage controls"></nav>
+</main>
+<!--APP-->
