@@ -689,7 +689,7 @@ document.addEventListener('keydown', (e) => {
 // path such as /PHOTOGRAPHER (the first test prints)
 {
   const [id, pose] = (location.hash.slice(1) || location.pathname.slice(1)).toLowerCase().split('/');
-  // branch previews (<branch>-three-panda.xoob.workers.dev) are where new pandas show up first
+  // branch previews (<branch>-three-pandas.xoob.workers.dev) are where new pandas show up first
   const preview = location.hostname.endsWith('.workers.dev');
   if (id === 'next' || (!id && preview)) showEdition('next');
   if (byId[id]) {
