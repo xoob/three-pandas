@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createPanda, ACCENTS, BASE_COLOURS, PASSES, POSES, VARIANTS, PoseDriver, resolvePose } from './panda.js';
 import { ROLES } from './passes.js';
+import CLAUDE_PROMPT from '../dist/claude-prompt.json' with { type: 'json' };
 // left to right, centre spot in the middle; `pose` and `base` as printed (tools/print.mjs PLATES)
 import CAST from './cast.json';
 
@@ -26,9 +27,8 @@ const HERO = 'analyst'; // centre stage (middle of src/cast.json) and the subjec
 const WIDTHS = [18, 21, 26, 21, 18]; // % of the row per spot, as .p1–.p5 in stage.html
 const OVERLAP = 1.8; // negative margin between spots, % of the row
 const GITHUB = 'https://github.com/xoob/three-panda';
-const CLAUDE = 'https://claude.ai/code?repositories=xoob%2Fthree-panda&prompt=' + encodeURIComponent(
-  'I want to add my own panda to Friends of BigPanda. Read CLAUDE.md first. Then ask me who the panda is for, '
-  + 'what to call them, and what makes them recognisable (hair, glasses, pose, props). Show me screenshots as you build it.');
+// a new Code session in the Claude desktop app, the README's prompt prefilled
+const CLAUDE = 'claude://code/new?q=' + encodeURIComponent(CLAUDE_PROMPT);
 
 const SWATCH_INK = (n) => { const c = new THREE.Color(n); return c.r * 0.3 + c.g * 0.59 + c.b * 0.11 > 0.6 ? '#1a1614' : '#ffffff'; };
 const ACCENT_SWATCHES = Object.entries(ACCENTS).map(([id, role]) => ({ id, label: cap(id), colour: ROLES[role].look }));

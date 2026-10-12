@@ -9,6 +9,11 @@ import json, os
 recipes = [json.load(open(f'figures/{f}')) for f in os.listdir('figures') if f.endswith('.json')]
 recipes.sort(key=lambda r: (r.get('hologram', False), r['label']))
 json.dump(recipes, open('dist/figures.json', 'w'))
+# the stage's "Open in Claude" prompt: the code block under "Make your own
+# panda" in README.md, the one copy of it
+import re
+prompt = re.search(r'^## Make your own panda\n.*?^```text\n(.*?)\n```', open('README.md').read(), re.S | re.M).group(1)
+json.dump(prompt, open('dist/claude-prompt.json', 'w'))
 PY
 # edition whose number goes into the QR links (EDITION, changed by hand)
 EDITION=$(tr -d '[:space:]' < EDITION)

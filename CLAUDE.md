@@ -13,11 +13,93 @@ exported as a multi-colour 3D print (Bambu A1 mini, at most 4 filaments per plat
 Everyone stays a panda: identity comes from hair, glasses, beard, outfit, pose
 and props.
 
+## Interview
+
+Before touching a file: start `npm install` in the background, then
+interview. Use AskUserQuestion (up to 4 questions per call, 2–4 options each;
+"Other" is added for free text; `multiSelect` where noted). One round at a
+time; read the answers before writing the next round. Skip anything already
+answered (in the prompt, by the photo) and say in the question text what you
+took from where. At most four rounds; stop as soon as you have three traits,
+an accent, a pose and a prop. Never ask about what does not read at 40 mm
+(eye colour, stubble, patterns, text, jewellery).
+
+Round 1, who:
+- Who is the panda for? `Me` / `A colleague` / `A team mascot, not a person`
+- Do you have a photo? `I'll paste one now` / `No, I'll describe them`
+
+Then, in chat: ask for the first name, and wait for the photo if promised.
+
+Photo: read only hair silhouette, hair colour, facial hair and glasses from
+it; say what you read and let them correct it. Never copy it into the repo,
+never describe the person beyond those four things in files, commits or the
+PR. The figure carries a first name only; its id is the lowercase first
+name, with an initial if taken (`hadas-n`).
+
+Round 2, looks (only what the photo left open):
+- Hair: `None, plain panda head` / `Short` (`crop` or `short`) / `Tall or
+  textured on top` (`textured`) / `Long` (`long`); `topknot` (tied up, with
+  `band` for a headband) via Other.
+- Hair colour: `Black` / `Brown` / `Grey`. Hair and beard share one colour.
+- Facial hair: `None` / `Goatee` / `Short boxed beard` (`boxed`) / `Full long
+  beard` (`full`); `ninja` (angular jaw beard) only when the photo shows one.
+- Glasses: `None` / `Frames` (`octagon` or `halfRim`) / `Shades`.
+
+Round 3, character:
+- Which sounds most like them? (the question text invites an MBTI type via
+  Other) `Runs the show: organised, decisive, on time` / `Deep in the
+  problem: quiet, finds the bug nobody else can` / `The one everyone talks
+  to: warm, listens, remembers` / `Up for anything: spontaneous, makes it fun`
+- Known for, or a hobby (pick up to 2, `multiSelect`): `Running or sport` /
+  `Music, always in headphones` / `Photography` / `Martial arts, yoga,
+  meditation`; anything else via Other (coffee, bike, laptop, pet...).
+- Mood on the figure: `Cheerful, laughing` / `Calm and kind` / `Focused,
+  intense` / `Zen, eyes closed`.
+
+Round 4, finishing (after applying the maps below):
+- Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
+- Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)`.
+- Pose: your three best candidates from `POSES`, each named with its comment
+  line from `src/rig.js` and the prop it implies (e.g. `hooray: shows the
+  tablet off`), plus `You choose` as the fourth.
+
+Maps (orientation, not law; the photo and the free text win):
+- Hobby → prop and pose: sport → `run`; music → `headphones` (+ `notes` or
+  `point`); photography → `camera`, `backpack` (+ `photo`, `run`); martial
+  arts or meditation → `gi`, `katana`, `ready` or `meditate`; dashboards and
+  numbers → `tablet` (+ `hooray`, `puzzled`); always on time → `stopwatch` +
+  `onTime`; launches → `rocket` + `liftoff`; security → `shield` + `guard`;
+  debugging → `magnifier` + `inspect`.
+- Trope → pose and face: runs the show → `handsOnHips`, `onTime`, `point`,
+  eyes `open` or `focused`, mouth `smile` or `firm`; deep in the problem →
+  `inspect`, `puzzled`, `notes`, `focused` + `calm`; the one everyone talks
+  to → `welcome`, `wave`, `hipWave`, `open` or `relaxed` + `smile` or `beam`;
+  up for anything → `dance`, `hooray`, `run`, `liftoff`, `closed` + `grin`.
+- Mood → face: cheerful = `closed` + `grin` (or `beam`); calm and kind =
+  `open` or `relaxed` + `smile` or `calm`; focused = `focused` or `alert` +
+  `firm`; zen = `serene` + `calm`. `alert` only on an action pose; `wink` and
+  `big` are seasoning, not identity.
+- Not in the kit (hat, cap, mug, laptop, phone, bike, instrument, pet,
+  ponytail, curls): a new prop or style is a kit part and costs an extra
+  round of building; a pose often carries the same trait for free. Offer
+  that choice in the summary, not as another question.
+- Do not give a new figure another cast member's prop + pose pair (magnifier
+  + `inspect` is the Detective) unless it is genuinely theirs.
+
+Summary, in chat, then one question: name and id; the three traits that read
+at 40 mm; filaments as a list (white, black, hair colour if any, accent; at
+most 4, so brown hair plus a grey beard plus an accent does not fit); pose,
+prop, eyes and mouth; kit parts vs new kit parts, and what each new part
+costs; what you left out and why. Unanswered questions get the kit default,
+named here. Then AskUserQuestion: `Build it` / `Change something first`.
+From here on it is a normal session (Add a figure, below): build, show
+screenshots, take feedback. AskUserQuestion only returns to pick between
+rendered candidates, after showing the `tools/palette.mjs` sheet.
+
 ## Add a figure
 
-1. Ask who the panda is for, what to call them (first name only), and what
-   makes them recognisable: hair, glasses, facial hair, clothes, a pose, a prop.
-   A photo helps; use it for visual traits only and keep it out of the repo.
+1. Run the interview (above) and get the summary confirmed: who, first name,
+   three traits, accent, pose, prop, kit vs new parts.
 2. Read `docs/design-language.md` (how figures are designed, what reads at
    40 mm, what was tried and rejected) before choosing parts.
 3. Create `figures/<id>.json` (id: lowercase, digits, dashes); the format is
@@ -72,5 +154,6 @@ no thin parts in mid-air, painted vs sculpted features, colour changes) are in
 
 ## Finish
 
-Work on a branch and open a pull request with the screenshots. Never change
+Work on a branch and open a pull request with the screenshots (`gh repo fork
+--remote` first if you cannot push to the repo). Never change
 `EDITION`: editions are changed by hand (`docs/printing.md`, "Editions and releases").
