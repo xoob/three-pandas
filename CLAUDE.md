@@ -42,8 +42,10 @@ Round 2, looks (only what the photo left open):
   `band` for a headband) via Other.
 - Hair colour: `Black` / `Brown` / `Grey`. Hair and beard share one colour.
 - Facial hair: `None` / `Goatee` / `Short boxed beard` (`boxed`) / `Full long
-  beard` (`full`); `ninja` (angular jaw beard) only when the photo shows one.
-- Glasses: `None` / `Frames` (`octagon` or `halfRim`) / `Shades`.
+  beard` (`full`); `jaw` (short beard from cheek to cheek) via Other; `ninja`
+  (angular jaw beard) only when the photo shows one.
+- Glasses: `None` / `Frames` (`octagon`, `halfRim` or thin `round` wire) /
+  `Shades`.
 
 Round 3, character:
 - Which sounds most like them? (the question text invites an MBTI type via
@@ -58,7 +60,7 @@ Round 3, character:
 
 Round 4, finishing (after applying the maps below):
 - Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
-- Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)`.
+- Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)` / `Hoodie`.
 - Pose: your best candidates, existing ones from `POSES` named with their
   comment line from `src/rig.js` and the prop they imply (e.g. `hooray:
   shows the tablet off`) and new ones described in a few words (e.g. `new:
@@ -136,7 +138,7 @@ rendered candidates, after showing the `tools/palette.mjs` sheet.
      existing figures and check it against the review checklist (section 5)
      before showing it.
 6. Colours come from the global palette `FILAMENTS` in `src/passes.js` (white,
-   black and six accents). A figure uses at most 4 filaments, white and black
+   black and seven accents). A figure uses at most 4 filaments, white and black
    included. Give its signature pose a QR code in `codes`: a random 4-digit
    upper-case hex code no other recipe uses (`npm run check` verifies).
 
