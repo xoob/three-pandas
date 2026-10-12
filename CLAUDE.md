@@ -108,7 +108,7 @@ rendered candidates, after showing the `tools/palette.mjs` sheet.
 3. Create `figures/<id>.json` (id: lowercase, digits, dashes); the format is
    documented at the top of `src/recipes.js`. Copy an existing figure as a
    start. Touch only your figure's file and the kit parts it needs.
-4. Pick parts from the kit first:
+4. The kit, where existing parts live and new ones go:
    - hair: `HAIR` in `src/hair.js`
    - beards: `BEARDS` in `src/beard.js`
    - glasses: `GLASSES_STYLES` in `src/passes.js`
