@@ -73,6 +73,8 @@ export function buildSkeleton(root) {
 //               when the arm is raised sideways
 //        bend   elbow flexion        wrist  wrist flexion
 //        turn   spins the paw about the forearm (turns a held prop)
+//        stretch  arm bone lengths ×: folded arms get longer bones, as a
+//               sculptor would, so each paw reaches past the other forearm
 // leg    swing  + forward             spread + outward      toe   toe-out
 //        knee   + bends the shin back  foot   + tips the toes up
 //        twist  spins the thigh about its own axis, turning the plane the
@@ -91,8 +93,8 @@ export function buildSkeleton(root) {
 
 export const NEUTRAL = {
   head: { nod: 0, turn: 0, tilt: 0 },
-  armR: { raise: 28, forward: 10, twist: 0, bend: 20, wrist: 0, turn: 0 },
-  armL: { raise: 28, forward: 10, twist: 0, bend: 20, wrist: 0, turn: 0 },
+  armR: { raise: 28, forward: 10, twist: 0, bend: 20, wrist: 0, turn: 0, stretch: 1 },
+  armL: { raise: 28, forward: 10, twist: 0, bend: 20, wrist: 0, turn: 0, stretch: 1 },
   legR: { swing: 0, spread: 2, twist: 0, knee: 0, foot: 0, toe: 16, roll: 0, stretch: 1 },
   legL: { swing: 0, spread: 2, twist: 0, knee: 0, foot: 0, toe: 16, roll: 0, stretch: 1 },
   body: { lean: 0, tilt: 0, turn: 0, hop: 0 },
@@ -168,6 +170,18 @@ export const POSES = {
     legL: { spread: 7 },
     body: { lean: -4 },
     motion: (t) => ({ body: { lean: -1.5 * Math.sin(t * 1.3) }, head: { nod: -1.5 * Math.sin(t * 1.3) } }), // slow, proud breathing
+  },
+  armsCrossed: {
+    label: 'Arms Crossed',
+    // arms folded over the belly, the left forearm on top, chin up, weight
+    // back on the heels: the relaxed, confident stance
+    head: { nod: -5, tilt: 3, turn: 4 },
+    armR: { raise: 2, forward: 51, twist: -82, bend: 80, stretch: 1.38 },
+    armL: { raise: 0, forward: 61, twist: -82, bend: 80, stretch: 1.38 },
+    legR: { spread: 6 },
+    legL: { spread: 6 },
+    body: { lean: -3 },
+    motion: (t) => ({ body: { lean: -1.2 * Math.sin(t * 1.2) }, head: { nod: -1.5 * Math.sin(t * 1.2) } }), // slow breathing
   },
   hipWave: {
     label: 'Hi!',
@@ -348,6 +362,7 @@ export function applyPose(joints, p) {
   for (const [side, s] of Object.entries(SIDES)) {
     const a = p['arm' + side];
     limbRotation(s, a.raise, a.forward, a.twist, joints['shoulder' + side].quaternion);
+    for (const n of ['elbow', 'wrist', 'paw']) joints[n + side].position.fromArray(RIG[n + side].at).multiplyScalar(a.stretch);
     joints['elbow' + side].quaternion.setFromAxisAngle(X, -deg(a.bend));
     joints['wrist' + side].quaternion.setFromAxisAngle(Y, s * deg(a.turn)).multiply(_qa.setFromAxisAngle(X, -deg(a.wrist)));
 

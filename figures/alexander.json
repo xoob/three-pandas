@@ -1,0 +1,25 @@
+{
+  "id": "alexander",
+  "label": "Alexander",
+  "codes": {
+    "armsCrossed": "B7C3"
+  },
+  "poses": [
+    "armsCrossed"
+  ],
+  "eyes": "open",
+  "mouth": "grin",
+  "hair": {
+    "style": "crop",
+    "colour": "brown"
+  },
+  "beard": {
+    "style": "boxed",
+    "colour": "brown"
+  },
+  "props": [],
+  "glasses": {
+    "style": "round",
+    "colour": "yellow"
+  }
+}
