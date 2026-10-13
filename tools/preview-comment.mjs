@@ -28,7 +28,8 @@ for (const id of ids) {
   const p = reports.find((x) => x.id === id && x.pose === signature);
   if (!p) throw new Error(`no print report for "${id}" in pose "${signature}"`);
   const ok = p.connected_bodies === 1 ? 'one connected body' : `**${p.connected_bodies} separate bodies — not printable**`;
-  lines.push(`Print, ${p.figure}: ${p.size_mm.join(' × ')} mm · ${p.slots.join(', ')} · ${ok}`, '',
+  const over = p.over_slots ? ` (**${p.slots.length} filaments — more than one AMS holds**)` : '';
+  lines.push(`Print, ${p.figure}: ${p.size_mm.join(' × ')} mm · ${p.slots.join(', ')}${over} · ${ok}`, '',
     `<img src="${base}/print-${id}.png?raw=true" width="260" alt="${r.label} print preview">`, '');
 }
 console.log(lines.join('\n'));

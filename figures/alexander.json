@@ -7,7 +7,7 @@
   "mouth": "grin",
   "hair": { "style": "crop", "colour": "brown" },
   "beard": { "style": "jaw", "colour": "brown" },
-  "glasses": { "style": "round", "colour": "purple" },
+  "glasses": { "style": "round", "colour": "yellow" },
   "outfit": { "style": "hoodie", "colour": "purple" },
   "props": ["miniCrew"]
 }

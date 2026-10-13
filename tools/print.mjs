@@ -312,11 +312,20 @@ const plates = ONLY.length ? {} : PLATES;
 const FIGURES = [...new Map((ONLY.length ? ONLY.map((id) => [id, signatures[id], 'white', WHOLE]) : Object.values(PLATES).flat())
   .map(([id, pose, base, cut]) => [figureKey(id, pose, base, cut), { id, pose, base, cut }])).entries()];
 
-/** AMS slot order for a set of figures: white, black, then the rest in FILAMENT order. */
-function slotsFor(what, figs) {
+/**
+ * AMS slot order for a set of figures: white, black, then the rest in FILAMENT order.
+ * A plate over the AMS's slots is an error. A single figure over them is
+ * exported anyway with a warning (`over_slots` in its report): it cannot
+ * print on one AMS lite as it is, and can go on no plate.
+ */
+function slotsFor(what, figs, plate = true) {
   const used = new Set(['white', 'black', ...figs.flatMap((f) => Object.keys(f.parts))]);
   const slots = Object.keys(FILAMENT).filter((f) => used.has(f));
-  if (slots.length > SLOTS) throw new Error(`${what} needs ${slots.length} filaments (${slots.join(', ')}); the AMS has ${SLOTS} slots`);
+  if (slots.length > SLOTS) {
+    const msg = `${what} needs ${slots.length} filaments (${slots.join(', ')}); the AMS has ${SLOTS} slots`;
+    if (plate) throw new Error(msg);
+    console.warn(`WARNING ${msg}`);
+  }
   return slots;
 }
 
@@ -329,8 +338,9 @@ for (const [key, { id: variant, pose, base, cut }] of FIGURES) {
   const slice = cut === WHOLE ? '' : `, ${cut.z[0]}–${cut.z[1]} mm${cut.halfWidth ? `, ±${cut.halfWidth} mm` : ''}`;
   fig.report.figure += slice;
   figures[key] = { ...fig, name: `${data.label} (${base} base${slice})` };
-  const slots = slotsFor(figures[key].name, [fig]);
+  const slots = slotsFor(figures[key].name, [fig], false);
   fig.report.slots = slots;
+  if (slots.length > SLOTS) fig.report.over_slots = true;
   figures[key].stls = Object.keys(fig.parts).map((filament) => ({ stl: `${key}-${slots.indexOf(filament) + 1}-${filament}.stl`, filament }));
   for (const { stl, filament } of figures[key].stls) writeSTL(path.join(OUT, stl), fig.parts[filament]);
   console.log(JSON.stringify(fig.report));
@@ -338,11 +348,11 @@ for (const [key, { id: variant, pose, base, cut }] of FIGURES) {
 
 // Bambu Studio projects (tools/bambu.py): one per figure, plus one per plate
 const colours = Object.fromEntries(Object.entries(FILAMENT).map(([k, f]) => [k, f.colour]));
-const project = (file, title, keys) => ({ file, title, slots: slotsFor(title, keys.map((key) => figures[key])), colours,
+const project = (file, title, keys, plate) => ({ file, title, slots: slotsFor(title, keys.map((key) => figures[key]), plate), colours,
   figures: keys.map((key) => ({ name: figures[key].name, parts: figures[key].stls })) });
 fs.writeFileSync(path.join(OUT, 'projects.json'), JSON.stringify([
-  ...FIGURES.map(([key]) => project(`${key}.3mf`, `Panda ${figures[key].name}, edition ${EDITION}`, [key])),
-  ...Object.entries(plates).map(([plate, list]) => project(`${plate}.3mf`, `Panda ${plate}, edition ${EDITION}`, list.map(([id, pose, base, cut]) => figureKey(id, pose, base, cut)))),
+  ...FIGURES.map(([key]) => project(`${key}.3mf`, `Panda ${figures[key].name}, edition ${EDITION}`, [key], false)),
+  ...Object.entries(plates).map(([plate, list]) => project(`${plate}.3mf`, `Panda ${plate}, edition ${EDITION}`, list.map(([id, pose, base, cut]) => figureKey(id, pose, base, cut)), true)),
 ], null, 2));
 
 // previews
