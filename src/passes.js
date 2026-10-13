@@ -415,6 +415,8 @@ function detailsPass(m) {
     m.group('beard', () => addBeard(m, v.beard, {
       z: (x, y) => faceZ(m.snout, x, y), mouth: [0, cy], lip: cy + GRIN.height * 0.45,
       opening: OPEN_MOUTHS.includes(v.mouth) ? grinShape(0).map(([x, y]) => [x, y + cy]) : null,
+      // a closed mouth's lips: the outline around its line, for beards that leave them bare
+      lips: MOUTH_LINES[v.mouth] ? strokeOutline(MOUTH_LINES[v.mouth](m.snout).map((p) => [p.x, p.y]), LIPS) : null,
       head: HEAD_SHELL,
     }));
   }
@@ -522,14 +524,21 @@ function snoutCurve(S, width, y, shift = 0) {
   return pts;
 }
 
-export const MOUTHS = {
-  smile: (m) => addMouthLine(m, 'smile', snoutCurve(m.snout, 0.12, (t) => m.snout.centre - 0.035 - 0.035 * (1 - t * t))),
+// the closed mouths: each a line on the front of snout S
+const MOUTH_LINES = {
+  smile: (S) => snoutCurve(S, 0.12, (t) => S.centre - 0.035 - 0.035 * (1 - t * t)),
   // small worried mouth, slightly off-centre, corners down
-  frown: (m) => addMouthLine(m, 'frown', snoutCurve(m.snout, 0.06, (t) => m.snout.centre - 0.07 + 0.018 * (1 - t * t) - 0.006 * t, 0.015)),
+  frown: (S) => snoutCurve(S, 0.06, (t) => S.centre - 0.07 + 0.018 * (1 - t * t) - 0.006 * t, 0.015),
   // calm closed mouth: a short, even line with the corners lifted a touch
-  calm: (m) => addMouthLine(m, 'calm', snoutCurve(m.snout, 0.085, (t) => m.snout.centre - 0.055 - 0.012 * (1 - t * t))),
+  calm: (S) => snoutCurve(S, 0.085, (t) => S.centre - 0.055 - 0.012 * (1 - t * t)),
   // firm mouth: a short flat line low on the muzzle, its corners a touch down (sits between a moustache and a chin beard)
-  firm: (m) => addMouthLine(m, 'firm', snoutCurve(m.snout, 0.08, (t) => m.snout.centre - 0.105 + 0.007 * (1 - t * t))),
+  firm: (S) => snoutCurve(S, 0.08, (t) => S.centre - 0.105 + 0.007 * (1 - t * t)),
+};
+// how far around a closed mouth's line a beard that shows the lips stays clear (beard.js `lips`)
+const LIPS = 0.028;
+
+export const MOUTHS = {
+  ...Object.fromEntries(Object.entries(MOUTH_LINES).map(([style, line]) => [style, (m) => addMouthLine(m, style, line(m.snout))])),
   grin: (m) => addGrin(m),
   beam: (m) => addBeam(m),
 };

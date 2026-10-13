@@ -64,8 +64,9 @@ export const BEARDS = {
   // along a clean cheek line under the eye patches to the moustache, and down
   // around the chin and under the jaw; fuller at the chin, with wavy strands
   // engraved down it. It is a shell on the head like the hair (`wrap`, see
-  // shellGeometry), so it follows the head round to the sides; an open mouth
-  // shows through an opening with a rounded lip.
+  // shellGeometry), so it follows the head round to the sides; the mouth
+  // shows through an opening with a soft lip: an open mouth through its
+  // outline, a closed one through a slot of bare lips around its line.
   jaw: {
     inlay: 0.04,
     wrap: {
@@ -136,6 +137,8 @@ function shellGeometry(W, face) {
   const { columns, rows, sink } = SHELL;
   const r = face.head.radii, S = W.strands;
   const mouthElevation = Math.asin(face.mouth[1] / r.y);
+  // an open mouth shows through its outline, a closed one through the bare lips around its line
+  const opening = face.opening ?? face.lips, grow = face.opening ? W.mouth.grow : 0;
   const pos = [];
   const vertex = (a, e, offset) => {
     const u = new THREE.Vector3(Math.cos(e) * Math.sin(a), Math.sin(e), Math.cos(e) * Math.cos(a));
@@ -155,9 +158,9 @@ function shellGeometry(W, face) {
     let t = W.thickness.cheek + (W.thickness.chin - W.thickness.cheek) * chin;
     const valley = (0.5 - 0.5 * Math.cos(S.count * a + S.wave * Math.sin(S.waves * e))) ** 3;
     t -= S.depth * valley * edge;
-    if (!face.opening || !at.front) return t * edge;
+    if (!opening || !at.front) return t * edge;
     // a soft lip (no vertical wall: the grid would show as steps along it)
-    const d = polygonDistance(face.opening, at.x, at.y) - W.mouth.grow;
+    const d = polygonDistance(opening, at.x, at.y) - grow;
     return d <= 0 ? -sink : -sink + (t * edge + sink) * smooth(Math.min(1, d / W.mouth.edge));
   };
   const outer = [], inner = [];

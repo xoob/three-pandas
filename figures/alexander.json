@@ -4,7 +4,7 @@
   "codes": { "armsCrossed": "B7C3" },
   "poses": ["armsCrossed"],
   "eyes": "open",
-  "mouth": "grin",
+  "mouth": "smile",
   "hair": { "style": "crop", "colour": "brown" },
   "beard": { "style": "jaw", "colour": "brown" },
   "glasses": { "style": "round", "colour": "yellow" },
