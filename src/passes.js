@@ -415,6 +415,7 @@ function detailsPass(m) {
     m.group('beard', () => addBeard(m, v.beard, {
       z: (x, y) => faceZ(m.snout, x, y), mouth: [0, cy], lip: cy + GRIN.height * 0.45,
       opening: OPEN_MOUTHS.includes(v.mouth) ? grinShape(0).map(([x, y]) => [x, y + cy]) : null,
+      head: HEAD_SHELL,
     }));
   }
   addFace(m, v);
