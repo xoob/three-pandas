@@ -1,0 +1,11 @@
+{
+  "id": "hadas-n",
+  "label": "Hadas N.",
+  "codes": { "hipWave": "0FB0" },
+  "poses": ["hipWave"],
+  "eyes": "open",
+  "mouth": "smile",
+  "hair": { "style": "long", "colour": "brown" },
+  "outfit": { "style": "dress", "colour": "blue" },
+  "props": []
+}
