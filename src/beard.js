@@ -59,13 +59,14 @@ export const BEARDS = {
     moustache: { halfWidth: 0.17, height: 0.042, drop: 0, droop: 0.075, thickness: 0.045, edge: 0.3 },
   },
   // chin beard: short around the mouth and up the cheeks like `boxed`, but the
-  // chin carries the weight: the beard thickens from the mouth down to a
-  // strong, rounded chin, and the moustache over it is a slim line
+  // chin carries the weight: the outline runs deep under the mouth to a
+  // rounded chin, and the moustache over it is a slim line. One even
+  // thickness: a thicker chin stood off the face as a ledge under the beard
   chin: {
     centre: 0,
-    jaw: [-0.42, 0.5],
+    jaw: [-Infinity, 0],
     outer: mirror([[-Math.PI / 2, 0.25], [-1.1, 0.25], [-Math.PI / 4, 0.24], [0, 0.26], [Math.PI / 8, 0.25], [Math.PI / 4, 0.18], [3 * Math.PI / 8, 0.13], [Math.PI / 2, 0.085]]),
-    thickness: { top: 0.022, jaw: 0.07 }, inlay: 0.04, edge: 0.2,
+    thickness: { top: 0.035, jaw: 0.035 }, inlay: 0.04, edge: 0.2,
     moustache: { halfWidth: 0.15, height: 0.03, drop: 0, droop: 0.06, thickness: 0.03, edge: 0.6 },
     slit: { halfWidth: 0.11, height: 0.055, drop: 0.024 }, // a closed mouth shows as a flat slot (≈ 1 mm tall, so it prints), `drop` above the mouth centre so the painted mouth line stays under the beard
   },
