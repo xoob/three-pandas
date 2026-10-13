@@ -1,11 +1,13 @@
 {
   "id": "andrey",
   "label": "Andrey",
-  "codes": { "ride": "7B3C" },
-  "poses": ["ride"],
+  "codes": { "ride": "7B3C", "cellar": "C5E2" },
+  "poses": ["cellar", "ride"],
   "eyes": "closed",
   "mouth": "grin",
   "snout": "strong",
   "beard": { "style": "chin", "colour": "black" },
-  "props": ["barrelRide", "glassRide"]
+  "props": ["barrel", "glassCellar", "barrelRide", "glassRide"],
+  "only": { "barrel": ["cellar"], "glassCellar": ["cellar"], "barrelRide": ["ride"], "glassRide": ["ride"] },
+  "faces": { "cellar": { "eyes": "open" } }
 }

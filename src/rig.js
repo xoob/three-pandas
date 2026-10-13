@@ -309,37 +309,13 @@ export const POSES = {
       return { armR: { bend: b }, armL: { bend: b }, head: { tilt: 3 * Math.sin(t * 3) } };
     },
   },
-  cheers: {
-    label: 'Cheers',
-    // a toast: the glass raised high in the right paw, the bottle held low at
-    // the left side, chin up, a small step forward
-    head: { nod: -8, tilt: 4, turn: -8 },
-    armR: { raise: 108, forward: 30, twist: 90, bend: 30, wrist: -8 },
-    armL: { raise: 50, forward: 16, twist: -40, bend: 50 },
-    legR: { swing: -6, spread: 4 },
-    legL: { swing: 8, spread: 5 },
-    body: { lean: -4, tilt: 3 },
-    motion: (t) => ({ armR: { raise: 4 * Math.sin(t * 2.2) }, head: { nod: -2 * Math.sin(t * 2.2) } }), // lifting the glass
-  },
-  pour: {
-    label: 'Pour',
-    // pouring: the bottle tipped in the right paw above the glass, which the
-    // left paw holds out in front of the belly; eyes on the glass
-    head: { nod: 6, turn: 4, tilt: -4 },
-    armR: { raise: 90, forward: 24, twist: -15, bend: 96 },
-    armL: { raise: 36, forward: 66, twist: -75, bend: 40 },
-    legR: { spread: 6 },
-    legL: { spread: 6 },
-    body: { lean: 3 },
-    motion: (t) => ({ armR: { raise: 3 * Math.sin(t * 1.4) }, head: { nod: 1.5 * Math.sin(t * 1.4) } }), // tipping the bottle
-  },
   cellar: {
     label: 'Cellar',
     // at ease beside the barrel: left paw resting on its lid, weight toward
     // it, the glass held up before the chest in the right paw
     head: { tilt: -5, turn: -6, nod: -2 },
     armL: { raise: 28, forward: 12, twist: 0, bend: 78 }, // forearm level, out over the barrel at the front left
-    armR: { raise: 90, forward: 24, twist: -15, bend: 96 },
+    armR: { raise: 74, forward: 24, twist: -15, bend: 90 },
     legR: { spread: 4, swing: 4 },
     legL: { spread: 6, swing: -2 },
     body: { tilt: -5 },
