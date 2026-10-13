@@ -1348,6 +1348,31 @@ function bossGeometry({ size: [bw, bh], top, sunk, height }) {
 }
 
 // glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
+// Mini panda, about 7 mm tall in print: a tiny seated panda made of blobs,
+// each ≥ 0.85 mm at print size: white body and head, black ears, arms, legs
+// and eye patches sunk into the head so they print flush. `floor` is the
+// height it sits on in `frame` (parts are named `<name>Body`, …).
+const MINI = { plate: [0.38, 0.06, 0.38], body: [0.13, 0.12, 0.115], head: [0.16, 0.135, 0.135] };
+
+function addMini(m, name, frame, floor) {
+  const P = MINI;
+  const headY = floor + 2 * P.body[1] - 0.03 + P.head[1];
+  m.add({ name: `${name}Body`, role: 'fur', parent: frame, position: v3(0, floor + P.body[1] - 0.01, 0),
+    make: () => ellipsoid(P.body, { detail: 4 }) });
+  m.add({ name: `${name}Head`, role: 'fur', parent: frame, position: v3(0, headY, 0.01),
+    make: () => ellipsoid(P.head, { detail: 4 }) });
+  for (const [side, s] of Object.entries(SIDES)) {
+    m.add({ name: `${name}Ear${side}`, role: 'black', parent: frame, position: v3(s * 0.115, headY + 0.105, -0.01),
+      make: () => ellipsoid([0.055, 0.055, 0.04], { detail: 3 }) });
+    m.add({ name: `${name}Arm${side}`, role: 'black', parent: frame, position: v3(s * 0.125, floor + 0.13, 0.03),
+      make: () => ellipsoid([0.05, 0.085, 0.055], { detail: 3 }) });
+    m.add({ name: `${name}Leg${side}`, role: 'black', parent: frame, position: v3(s * 0.08, floor + 0.04, 0.07),
+      make: () => ellipsoid([0.065, 0.055, 0.085], { detail: 3 }) });
+    m.add({ name: `${name}Patch${side}`, role: 'black', parent: frame, position: v3(s * 0.065, headY + 0.01, 0.1),
+      make: () => ellipsoid([0.042, 0.048, 0.04], { detail: 3 }) });
+  }
+}
+
 export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades, round: addRound };
 
 export const PROPS = {
@@ -1488,29 +1513,26 @@ export const PROPS = {
   // ≥ 0.85 mm at print size: white body and head, black ears, arms, legs and
   // eye patches sunk into the head so they print flush
   miniPanda(m) {
-    const P = { plate: [0.38, 0.06, 0.38], body: [0.13, 0.12, 0.115], head: [0.16, 0.135, 0.135] };
     const paw = posedJoints('present').pawR.getWorldPosition(new THREE.Vector3());
     const R = ARM.radii[ARM.radii.length - 1];
     // upright on the paw, turned a little toward the viewer's side of the figure
     const frame = worldAnchor(m, 'miniPanda', 'pawR', 'present', paw.clone().add(v3(-0.05, R - 0.035, 0.03)),
       new THREE.Quaternion().setFromAxisAngle(Y, THREE.MathUtils.degToRad(-12)));
-    const top = P.plate[1]; // heights below are above the plate
-    const headY = top + 2 * P.body[1] - 0.03 + P.head[1];
+    const top = MINI.plate[1];
     m.add({ name: 'miniPlate', role: 'yellow', parent: frame, position: v3(0, top / 2, 0),
-      make: () => new RoundedBoxGeometry(...P.plate, 4, 0.025) });
-    m.add({ name: 'miniBody', role: 'fur', parent: frame, position: v3(0, top + P.body[1] - 0.01, 0),
-      make: () => ellipsoid(P.body, { detail: 4 }) });
-    m.add({ name: 'miniHead', role: 'fur', parent: frame, position: v3(0, headY, 0.01),
-      make: () => ellipsoid(P.head, { detail: 4 }) });
-    for (const [side, s] of Object.entries(SIDES)) {
-      m.add({ name: `miniEar${side}`, role: 'black', parent: frame, position: v3(s * 0.115, headY + 0.105, -0.01),
-        make: () => ellipsoid([0.055, 0.055, 0.04], { detail: 3 }) });
-      m.add({ name: `miniArm${side}`, role: 'black', parent: frame, position: v3(s * 0.125, top + 0.13, 0.03),
-        make: () => ellipsoid([0.05, 0.085, 0.055], { detail: 3 }) });
-      m.add({ name: `miniLeg${side}`, role: 'black', parent: frame, position: v3(s * 0.08, top + 0.04, 0.07),
-        make: () => ellipsoid([0.065, 0.055, 0.085], { detail: 3 }) });
-      m.add({ name: `miniPatch${side}`, role: 'black', parent: frame, position: v3(s * 0.065, headY + 0.01, 0.1),
-        make: () => ellipsoid([0.042, 0.048, 0.04], { detail: 3 }) });
+      make: () => new RoundedBoxGeometry(...MINI.plate, 4, 0.025) });
+    addMini(m, 'mini', frame, top);
+  },
+
+  // the crew: five mini pandas (the five of edition one) sitting in an arc on
+  // the base in front of the feet, each facing outward. Black and white only,
+  // so they cost no filament; they sink a little into the base and fuse with it
+  miniCrew(m) {
+    const C = { count: 5, radius: 0.82, spread: 62, sunk: 0.02 }; // arc radius from the centre; degrees from the front to the outer ones
+    for (let i = 0; i < C.count; i++) {
+      const a = THREE.MathUtils.degToRad(C.spread * (i / (C.count - 1) * 2 - 1));
+      const frame = m.anchor(`crew${i}`, null, v3(C.radius * Math.sin(a), 0, C.radius * Math.cos(a)), new THREE.Quaternion().setFromAxisAngle(Y, a));
+      addMini(m, `crew${i}`, frame, -C.sunk);
     }
   },
 

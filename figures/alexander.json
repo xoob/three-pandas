@@ -1,12 +1,14 @@
 {
   "id": "alexander",
   "label": "Alexander",
-  "codes": { "present": "B3F4" },
-  "poses": ["present"],
+  "codes": { "present": "B3F4", "armsCrossed": "7C2E" },
+  "poses": ["present", "armsCrossed"],
   "eyes": "closed",
   "mouth": "grin",
   "hair": { "style": "textured", "colour": "brown" },
   "beard": { "style": "boxed", "colour": "brown" },
   "glasses": { "style": "round", "colour": "yellow" },
-  "props": ["miniPanda"]
+  "props": ["miniPanda", "miniCrew"],
+  "only": { "miniPanda": ["present"], "miniCrew": ["armsCrossed"] },
+  "faces": { "armsCrossed": { "eyes": "open", "mouth": "smile" } }
 }
