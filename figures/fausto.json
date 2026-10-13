@@ -1,0 +1,14 @@
+{
+  "id": "fausto",
+  "label": "Fausto",
+  "codes": { "ready": "0E5C" },
+  "poses": ["meditate", "ready"],
+  "eyes": "alert",
+  "mouth": "firm",
+  "faces": { "meditate": { "eyes": "serene" } },
+  "snout": "panda",
+  "hair": { "style": "topknot", "colour": "black" },
+  "beard": { "style": "ninja", "colour": "black" },
+  "outfit": { "style": "gi", "colour": "grey" },
+  "props": ["katana"]
+}
