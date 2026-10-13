@@ -10,12 +10,13 @@ figure. Live at **https://pandas.xoob.de**.
 ## Make your own panda
 
 Paste this into a new [Claude Code](https://claude.com/claude-code) session
-(the stage's "Open in Claude" opens the Claude app with it). Claude asks about
-the panda (a photo helps), builds the figure, shows you screenshots and opens
-a pull request.
+(the stage's "Open in Claude" opens the Claude app with it). Claude chats with
+you about the panda (a photo helps), shows three or four first variants to
+pick from, builds the figure with screenshots along the way and opens a pull
+request.
 
 ```text
-I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-pandas, read its CLAUDE.md and follow it: ask me about the panda (I may paste a photo), build the figure, show me screenshots as you go, and open a pull request when I'm happy.
+I want to make a panda figure of myself or a colleague for Friends of BigPanda. Clone https://github.com/xoob/three-pandas, read its CLAUDE.md and follow it: chat with me about the panda (I may paste a photo), show me a few variants to pick from, build the figure with screenshots as you go, and open a pull request when I'm happy.
 ```
 
 ## Run
@@ -101,6 +102,7 @@ The tools drive headless Chromium through `playwright-core`. Set
 - `tools/check.mjs` – recipe checks (`npm run check`)
 - `tools/preview.mjs` – one preview sheet per figure (angled, front, side, head close-up)
 - `tools/palette.mjs` – compares the options of one recipe field side by side
+- `tools/variants.mjs` – one sheet of whole variants of a figure (pose, props, outfit, face), the first-pass candidates of a new panda
 - `tools/pixdiff.mjs` – compares two folders of screenshots pixel by pixel (proves a refactor changed nothing)
 - `tools/print.mjs`, `tools/bambu.py` – print export
 - `tools/release.mjs` – publishes the printed projects as a GitHub release
