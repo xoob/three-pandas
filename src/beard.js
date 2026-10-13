@@ -67,6 +67,7 @@ export const BEARDS = {
     outer: mirror([[-Math.PI / 2, 0.25], [-1.1, 0.25], [-Math.PI / 4, 0.24], [0, 0.26], [Math.PI / 8, 0.25], [Math.PI / 4, 0.18], [3 * Math.PI / 8, 0.13], [Math.PI / 2, 0.085]]),
     thickness: { top: 0.022, jaw: 0.07 }, inlay: 0.04, edge: 0.2,
     moustache: { halfWidth: 0.15, height: 0.03, drop: 0, droop: 0.06, thickness: 0.03, edge: 0.6 },
+    slit: { halfWidth: 0.11, height: 0.055, drop: 0.024 }, // a closed mouth shows as a flat slot (≈ 1 mm tall, so it prints), `drop` above the mouth centre so the painted mouth line stays under the beard
   },
 };
 
@@ -134,12 +135,21 @@ export function addBeard(m, slot, face) {
   const centre = [face.mouth[0], face.mouth[1] + style.centre];
   // an open mouth is cut out of a beard that surrounds it; a beard whose
   // centre lies outside the opening (a chin beard below the mouth) leaves it alone
-  const around = face.opening && inside(face.opening, centre);
+  // `slit`: under a closed mouth the beard would be one dark mass with no
+  // mouth at all, so it parts in a flat slot at the mouth and the white of the
+  // face shows through as a level, neutral mouth
+  const S = style.slit;
+  const slit = !face.opening && S && Array.from({ length: 24 }, (_, i) => {
+    const a = (i / 24) * Math.PI * 2, r = S.height / 2, side = Math.cos(a) >= 0 ? 1 : -1;
+    return [face.mouth[0] + side * (S.halfWidth - r) + r * Math.cos(a), face.mouth[1] + S.drop + r * Math.sin(a)];
+  });
+  const opening = face.opening ?? slit;
+  const around = opening && inside(opening, centre);
   m.add({
     name: 'beard', role: `hair-${slot.colour}`, parent: 'head',
     make: () => facePatch(base, {
       centre,
-      inner: around && ((a) => polygonRadius(face.opening, centre, a)),
+      inner: around && ((a) => polygonRadius(opening, centre, a)),
       outer: (a) => outlineAt(style.outer, a),
       thickness, inlay: style.inlay, edge: style.edge,
     }),
