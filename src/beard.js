@@ -58,6 +58,16 @@ export const BEARDS = {
     thickness: { top: 0.03, jaw: 0.03 }, inlay: 0.04, edge: 0.2,
     moustache: { halfWidth: 0.17, height: 0.042, drop: 0, droop: 0.075, thickness: 0.045, edge: 0.3 },
   },
+  // chin beard: short around the mouth and up the cheeks like `boxed`, but the
+  // chin carries the weight: the beard thickens from the mouth down to a
+  // strong, rounded chin, and the moustache over it is a slim line
+  chin: {
+    centre: 0,
+    jaw: [-0.42, 0.5],
+    outer: mirror([[-Math.PI / 2, 0.25], [-1.1, 0.25], [-Math.PI / 4, 0.24], [0, 0.26], [Math.PI / 8, 0.25], [Math.PI / 4, 0.18], [3 * Math.PI / 8, 0.13], [Math.PI / 2, 0.085]]),
+    thickness: { top: 0.022, jaw: 0.07 }, inlay: 0.04, edge: 0.2,
+    moustache: { halfWidth: 0.15, height: 0.03, drop: 0, droop: 0.06, thickness: 0.03, edge: 0.6 },
+  },
 };
 
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -70,6 +80,16 @@ function outlineAt(pts, a) {
     if (a <= a1) return r0 + (r1 - r0) * smooth((a - a0) / (a1 - a0));
   }
   return pts[pts.length - 1][1];
+}
+
+/** Whether point `p` lies inside the closed polygon `pts` ([x, y] points). */
+function inside(pts, [x, y]) {
+  let hit = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > y) !== (yj > y) && x < xi + ((xj - xi) * (y - yi)) / (yj - yi)) hit = !hit;
+  }
+  return hit;
 }
 
 /**
@@ -112,11 +132,14 @@ export function addBeard(m, slot, face) {
     });
   }
   const centre = [face.mouth[0], face.mouth[1] + style.centre];
+  // an open mouth is cut out of a beard that surrounds it; a beard whose
+  // centre lies outside the opening (a chin beard below the mouth) leaves it alone
+  const around = face.opening && inside(face.opening, centre);
   m.add({
     name: 'beard', role: `hair-${slot.colour}`, parent: 'head',
     make: () => facePatch(base, {
       centre,
-      inner: face.opening && ((a) => polygonRadius(face.opening, centre, a)),
+      inner: around && ((a) => polygonRadius(face.opening, centre, a)),
       outer: (a) => outlineAt(style.outer, a),
       thickness, inlay: style.inlay, edge: style.edge,
     }),

@@ -6,7 +6,7 @@
   "eyes": "open",
   "mouth": "smile",
   "snout": "strong",
-  "hair": { "style": "crop", "colour": "black" },
-  "beard": { "style": "boxed", "colour": "black" },
+  "hair": { "style": "crew", "colour": "black" },
+  "beard": { "style": "chin", "colour": "black" },
   "props": []
 }

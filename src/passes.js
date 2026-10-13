@@ -1293,6 +1293,70 @@ function bossGeometry({ size: [bw, bh], top, sunk, height }) {
 }
 
 // glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
+// ----- wine: glass, bottle and barrel, the pieces of the wine props -----
+
+// Wine glass on `frame` (origin where the paw grips the stem, +Y up): a chunky
+// goblet. The lower bowl is the wine seen through the glass (red); the rim
+// above it, the stem and the foot are white, and the wine's surface shows
+// inside the rim from above.
+const GLASS = { from: 0.1, wide: 0.26, level: 0.35, top: 0.46, bowl: 0.16, rim: 0.135, wall: 0.03, stem: 0.045, foot: { radius: 0.14, y: -0.27, height: 0.04 } };
+function wineGlassParts(m, name, frame) {
+  const G = GLASS, print = m.style.print;
+  const stem = print ? 0.06 : G.stem, wall = print ? PRINT.minLine : G.wall;
+  const outer = (y) => G.bowl + (G.rim - G.bowl) * ((y - G.wide) / (G.top - G.wide));
+  m.add({ name: `${name}Wine`, role: 'red', parent: frame,
+    make: () => lathe([[0, G.from], [stem, G.from], [0.11, G.from + 0.05], [0.148, G.wide - 0.07], [G.bowl, G.wide], [outer(G.level), G.level], [0, G.level]]) });
+  m.add({ name: `${name}Rim`, role: 'eyes', parent: frame,
+    make: () => lathe([[0, G.level], [outer(G.level), G.level], [G.rim, G.top - 0.012], [G.rim - 0.012, G.top], [G.rim - wall, G.top], [outer(G.level) - wall, G.level + 0.03], [0, G.level + 0.03]]) });
+  m.add({ name: `${name}Surface`, role: 'red', parent: frame, position: v3(0, G.level + 0.04, 0),
+    make: () => new THREE.CylinderGeometry(outer(G.level) - wall + 0.004, outer(G.level) - wall + 0.004, 0.02, 48) });
+  const F = G.foot;
+  m.add({ name: `${name}Stem`, role: 'eyes', parent: frame,
+    make: () => lathe([[0, F.y], [F.radius, F.y], [F.radius, F.y + F.height * 0.6], [stem + 0.02, F.y + F.height], [stem, F.y + F.height + 0.03], [stem, G.from + 0.01], [0, G.from + 0.01]]) });
+}
+
+// Wine bottle on `frame` (origin at the middle of its bottom, +Y up): green
+// glass with round shoulders and a short neck, a white label band standing a
+// little proud of it, a red capsule over the cork.
+const BOTTLE = { radius: 0.115, body: 0.36, neck: 0.045, height: 0.64, label: [0.09, 0.27] };
+function wineBottleParts(m, name, frame) {
+  const B = BOTTLE, neck = m.style.print ? 0.06 : B.neck;
+  m.add({ name: `${name}Glass`, role: 'green', parent: frame,
+    make: () => lathe([[0, 0], [B.radius - 0.02, 0], [B.radius, 0.02], [B.radius, B.body], [B.radius - 0.015, B.body + 0.06], [neck + 0.03, B.body + 0.12], [neck, B.body + 0.17], [neck, B.height], [0, B.height]]) });
+  m.add({ name: `${name}Label`, role: 'eyes', parent: frame,
+    make: () => lathe([[0, B.label[0]], [B.radius + 0.008, B.label[0]], [B.radius + 0.008, B.label[1]], [0, B.label[1]]]) });
+  m.add({ name: `${name}Capsule`, role: 'red', parent: frame,
+    make: () => lathe([[0, B.height - 0.09], [neck + 0.014, B.height - 0.09], [neck + 0.014, B.height + 0.02], [neck, B.height + 0.03], [0, B.height + 0.03]]) });
+}
+
+// Wine barrel on `frame` (origin at its centre, +Y along its axis): brown
+// staves bulging toward the middle, both lids set in a little, four dark
+// hoops standing proud of the staves.
+function barrelParts(m, name, frame, { end, mid, height }) {
+  const h = height / 2, inset = 0.035, lip = 0.045;
+  const radius = (y) => end + (mid - end) * (1 - (y / h) ** 2);
+  const side = Array.from({ length: 13 }, (_, i) => { const y = -h + (i / 12) * height; return [radius(y), y]; });
+  m.add({ name: `${name}Staves`, role: 'brown', parent: frame,
+    make: () => lathe([[0, -h + inset], [end - lip, -h + inset], [end - lip, -h], ...side, [end - lip, h], [end - lip, h - inset], [0, h - inset]]) });
+  [[-0.9, -0.7], [-0.4, -0.22], [0.22, 0.4], [0.7, 0.9]].forEach(([a, b], i) => {
+    const y0 = a * h, y1 = b * h, proud = 0.014;
+    m.add({ name: `${name}Hoop${i}`, role: 'dark', parent: frame,
+      make: () => lathe([[0, y0], [radius(y0) + proud, y0], [radius((y0 + y1) / 2) + proud, (y0 + y1) / 2], [radius(y1) + proud, y1], [0, y1]]) });
+  });
+}
+
+/** Frame at a paw as it is in `pose`, upright in the world there, moved by `offset` (panda space). */
+function uprightAtPaw(m, name, joint, pose, offset = v3()) {
+  const paw = posedJoints(pose)[joint].getWorldPosition(new THREE.Vector3());
+  return worldAnchor(m, name, joint, pose, paw.add(offset));
+}
+
+// barrel standing on the base at the figure's front left in the Cellar pose,
+// its lid just under the resting left paw (`out`: its centre from the paw, x and z)
+const CELLAR_BARREL = { end: 0.27, mid: 0.33, out: [0.1, 0.04] };
+// barrel lying on the base front to back, ridden in the Ride pose
+const RIDE_BARREL = { end: 0.27, mid: 0.34, height: 1.0, at: [0, 0.04], sink: 0.03 };
+
 export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades };
 
 export const PROPS = {
@@ -1554,6 +1618,59 @@ export const PROPS = {
       m.add({ name: `strap${side}`, role: 'red', parent: 'pelvis', position: at.p.add(BODY.offset), quaternion: orientZ(at.n, Y),
         make: () => new RoundedBoxGeometry(0.1, 0.36, 0.035, 2, 0.012) });
     }
+  },
+
+  // wine glass raised in the right paw (Cheers), and the bottle held by its
+  // body at the left side
+  glassCheers(m) {
+    wineGlassParts(m, 'glassCheers', uprightAtPaw(m, 'glassCheers', 'pawR', 'cheers'));
+  },
+  bottleCheers(m) {
+    wineBottleParts(m, 'bottleCheers', uprightAtPaw(m, 'bottleCheers', 'pawL', 'cheers', v3(0.06, -0.3, 0.12)));
+  },
+
+  // pouring (Pour): the glass held out in the left paw, the bottle tipped in
+  // the right paw with its neck over the glass
+  glassPour(m) {
+    wineGlassParts(m, 'glassPour', uprightAtPaw(m, 'glassPour', 'pawL', 'pour'));
+  },
+  bottlePour(m) {
+    const j = posedJoints('pour');
+    const paw = j.pawR.getWorldPosition(new THREE.Vector3());
+    const glass = j.pawL.getWorldPosition(new THREE.Vector3()).add(v3(0, GLASS.top + 0.12, 0));
+    const y = glass.clone().sub(paw).normalize(); // the neck points at the glass
+    const x = new THREE.Vector3().crossVectors(y, Z).normalize();
+    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, new THREE.Vector3().crossVectors(x, y)));
+    const frame = worldAnchor(m, 'bottlePour', 'pawR', 'pour', paw.clone().addScaledVector(y, -0.22), q);
+    wineBottleParts(m, 'bottlePour', frame);
+  },
+
+  // wine barrel standing on the base at the left (Cellar): the left paw rests
+  // on its lid; and the glass held before the chest in the right paw
+  barrel(m) {
+    const B = CELLAR_BARREL;
+    const paw = posedJoints('cellar').pawL.getWorldPosition(new THREE.Vector3());
+    const height = paw.y - 0.1 + BASE.sink; // lid just under the paw, the bottom sunk into the base
+    const frame = m.anchor('barrel', null, v3(paw.x + B.out[0], height / 2 - BASE.sink, paw.z + B.out[1]));
+    barrelParts(m, 'barrel', frame, { ...B, height });
+  },
+  glassCellar(m) {
+    wineGlassParts(m, 'glassCellar', uprightAtPaw(m, 'glassCellar', 'pawR', 'cellar'));
+  },
+
+  // barrel lying on the base front to back, on two chocks (Ride): the figure
+  // sits astride it; and the glass thrown up in the right paw
+  barrelRide(m) {
+    const B = RIDE_BARREL;
+    const frame = m.anchor('barrelRide', null, v3(B.at[0], B.mid - B.sink, B.at[1]), new THREE.Quaternion().setFromAxisAngle(X, Math.PI / 2));
+    barrelParts(m, 'barrelRide', frame, B);
+    for (const s of [-1, 1]) {
+      m.add({ name: `barrelRideChock${s}`, role: 'brown', position: v3(B.at[0] + s * 0.27, 0.05, B.at[1]),
+        make: () => new RoundedBoxGeometry(0.16, 0.14, 0.5, 3, 0.03) });
+    }
+  },
+  glassRide(m) {
+    wineGlassParts(m, 'glassRide', uprightAtPaw(m, 'glassRide', 'pawR', 'ride'));
   },
 };
 

@@ -32,6 +32,16 @@ export const HAIR = {
     volume: { at: [0, 0.75, 0.66], radius: 0.85, height: 0.1 }, // lift: centre direction, angular radius, extra height
     edge: 0.07, // angle over which the lip rises from the head to full thickness
   },
+  // crew cut: a short flat top with a square forehead line, faded to almost
+  // nothing at the sides and the back (`fade`: below elevation `from` the
+  // hair is `to` × its thickness, full again `over` radians higher)
+  crew: {
+    hairline: mirror([[0, 0.64], [0.42, 0.66], [0.7, 0.72], [1.0, 0.56], [1.5, 0.3], [2.2, 0.0], [2.75, -0.24], [Math.PI, -0.28]]),
+    thickness: 0.08,
+    volume: { at: [0, 0.8, 0.6], radius: 0.7, height: 0.03 }, // a little lift at the front of the top
+    edge: 0.07,
+    fade: { from: 0.5, over: 0.22, to: 0.25 },
+  },
   // short and natural: even hairline, short at the sides, fuller and higher on top
   short: {
     hairline: mirror([[0, 0.5], [0.45, 0.52], [0.8, 0.5], [1.15, 0.34], [1.6, 0.14], [2.2, -0.08], [2.75, -0.26], [Math.PI, -0.3]]),
@@ -160,6 +170,8 @@ function thicknessAt(style, a, e, end) {
     * smooth(THREE.MathUtils.clamp((inside - edgeOf(style, end)) / 0.1, 0, 1));
   if (G && e < style.leave) t += G.depth * Math.cos(a * G.count) * smooth(Math.min(1, (style.leave - e) / 0.4));
   if (e < style.leave) t *= 1 + style.hang.bulk * smooth(Math.min(1, ((style.leave - e) * DROP) / 0.25));
+  const F = style.fade; // thin at the sides and back, full on top
+  if (F) t *= F.to + (1 - F.to) * smooth(THREE.MathUtils.clamp((e - F.from) / F.over, 0, 1));
   return t * rise;
 }
 
