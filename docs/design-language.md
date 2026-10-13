@@ -46,7 +46,8 @@ so a new figure looks like it came from the same designer.
   `serene` lids and stands ready with `alert` eyes. Open mouths (`grin`, `beam`) cut an opening in a beard;
   closed ones hide under it and the moustache marks the mouth.
 - **Colour.** White, black, plus at most two accent filaments per plate
-  (`COLOURS` in `src/passes.js`: blue, green, yellow, red, grey, brown, dark).
+  (`COLOURS` in `src/passes.js`: blue, green, yellow, red, grey, brown, purple,
+  dark).
   Accents are small and purposeful: glasses frame, hair tie, a prop, a dress.
   Hair and beards are a natural colour (black, brown, grey); the face itself
   is never recoloured.
@@ -171,8 +172,8 @@ how the export works is in [printing.md](printing.md).
 ### Filaments
 
 - **Each figure its own accents, from one global palette.** The palette is
-  `FILAMENTS` in `src/passes.js`: 8 filaments, white and black for the panda
-  plus six accents (blue, green, yellow, red, grey, brown). A figure picks
+  `FILAMENTS` in `src/passes.js`: 9 filaments, white and black for the panda
+  plus seven accents (blue, green, yellow, red, grey, brown, purple). A figure picks
   its accents from it (hair, beard, glasses, clothes, props). At most 4
   filaments per figure and per plate (white + black + 2 accents, the AMS
   lite's 4 slots); plates group figures whose colours fit (`PLATES` in

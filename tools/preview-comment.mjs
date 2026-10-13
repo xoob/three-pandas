@@ -6,13 +6,13 @@
 // (<base>/print-<id>.png, from print-out/report.json).
 // <base> is a GitHub blob URL; `?raw=true` makes it render as an image.
 // The live stage is the branch's Workers Builds preview (npx wrangler preview,
-// named after the branch: figure/leon → figure-leon-three-panda.xoob.workers.dev).
+// named after the branch: figure/leon → figure-leon-three-pandas.xoob.workers.dev).
 // The first line is a marker the workflow uses to find and update its comment.
 import fs from 'node:fs';
 
 const [base, sha, branch, ...ids] = process.argv.slice(2);
 if (!base || !sha || !branch || !ids.length) throw new Error('usage: node tools/preview-comment.mjs <image-url-base> <sha> <branch> <id ...>');
-const stage = `https://${branch.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-three-panda.xoob.workers.dev`;
+const stage = `https://${branch.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-three-pandas.xoob.workers.dev`;
 const recipes = JSON.parse(fs.readFileSync('dist/figures.json', 'utf8'));
 const printed = ids.some((id) => !recipes.find((x) => x.id === id)?.hologram);
 const reports = printed ? JSON.parse(fs.readFileSync('print-out/report.json', 'utf8')) : [];

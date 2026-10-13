@@ -1,14 +1,13 @@
 {
   "id": "alexander",
   "label": "Alexander",
-  "codes": { "present": "B3F4", "armsCrossed": "7C2E" },
-  "poses": ["present", "armsCrossed"],
-  "eyes": "closed",
+  "codes": { "armsCrossed": "B7C3" },
+  "poses": ["armsCrossed"],
+  "eyes": "open",
   "mouth": "grin",
-  "hair": { "style": "textured", "colour": "brown" },
-  "beard": { "style": "boxed", "colour": "brown" },
-  "glasses": { "style": "round", "colour": "yellow" },
-  "props": ["miniPanda", "miniCrew"],
-  "only": { "miniPanda": ["present"], "miniCrew": ["armsCrossed"] },
-  "faces": { "armsCrossed": { "eyes": "open", "mouth": "smile" } }
+  "hair": { "style": "crop", "colour": "brown" },
+  "beard": { "style": "jaw", "colour": "brown" },
+  "glasses": { "style": "round", "colour": "purple" },
+  "outfit": { "style": "hoodie", "colour": "purple" },
+  "props": ["miniCrew"]
 }

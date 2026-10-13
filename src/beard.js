@@ -58,6 +58,17 @@ export const BEARDS = {
     thickness: { top: 0.03, jaw: 0.03 }, inlay: 0.04, edge: 0.2,
     moustache: { halfWidth: 0.17, height: 0.042, drop: 0, droop: 0.075, thickness: 0.045, edge: 0.3 },
   },
+  // short beard over the whole jaw: from under the nose out along a clean,
+  // nearly level cheek line (below the eye patches) to the sides of the face,
+  // and down around the chin along the head's outline, so the lower face is
+  // bearded from cheek to cheek; a moustache standing a little proud of it
+  jaw: {
+    centre: 0,
+    jaw: [-Infinity, 0],
+    outer: mirror([[-Math.PI / 2, 0.265], [-0.89, 0.315], [-0.5, 0.385], [-0.23, 0.45], [-0.02, 0.51], [0.08, 0.535], [0.15, 0.52], [0.21, 0.44], [0.27, 0.31], [0.357, 0.213], [0.64, 0.125], [Math.PI / 2, 0.085]]),
+    thickness: { top: 0.03, jaw: 0.035 }, inlay: 0.04, edge: 0.12,
+    moustache: { halfWidth: 0.16, height: 0.04, drop: -0.012, droop: 0.012, thickness: 0.045, edge: 0.3 }, // nearly straight, clear of the corners of a smile
+  },
 };
 
 const smooth = (t) => t * t * (3 - 2 * t);

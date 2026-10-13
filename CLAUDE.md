@@ -42,8 +42,10 @@ Question bank: looks (only what the photo left open):
   `band` for a headband) via Other.
 - Hair colour: `Black` / `Brown` / `Grey`. Hair and beard share one colour.
 - Facial hair: `None` / `Goatee` / `Short boxed beard` (`boxed`) / `Full long
-  beard` (`full`); `ninja` (angular jaw beard) only when the photo shows one.
-- Glasses: `None` / `Frames` (`octagon` or `halfRim`) / `Shades`.
+  beard` (`full`); `jaw` (short beard from cheek to cheek) via Other; `ninja`
+  (angular jaw beard) only when the photo shows one.
+- Glasses: `None` / `Frames` (`octagon`, `halfRim` or thin `round` wire) /
+  `Shades`.
 
 Question bank: character:
 - Which sounds most like them? (the question text invites an MBTI type via
@@ -58,7 +60,7 @@ Question bank: character:
 
 Question bank: finishing (after applying the maps below):
 - Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
-- Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)`.
+- Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)` / `Hoodie`.
 - Pose: your best candidates, existing ones from `POSES` named with their
   comment line from `src/rig.js` and the prop they imply (e.g. `hooray:
   shows the tablet off`) and new ones described in a few words (e.g. `new:
@@ -150,7 +152,7 @@ Then build right away; the user corrects course on the first screenshots.
      existing figures and check it against the review checklist (section 5)
      before showing it.
 6. Colours come from the global palette `FILAMENTS` in `src/passes.js` (white,
-   black and six accents). A figure uses at most 4 filaments, white and black
+   black and seven accents). A figure uses at most 4 filaments, white and black
    included. Give its signature pose a QR code in `codes`: a random 4-digit
    upper-case hex code no other recipe uses (`npm run check` verifies).
 
@@ -196,7 +198,7 @@ When the user is happy, without waiting to be asked:
    other figures whenever shared code changed.
 2. Open the pull request, titled `Figure: <Name>`, its description like the
    other figure PRs: one line of the figure's traits, then
-   `Live stage: https://figure-<id>-three-panda.xoob.workers.dev/#<id>/<pose>`
+   `Live stage: https://figure-<id>-three-pandas.xoob.workers.dev/#<id>/<pose>`
    (the branch's Cloudflare preview).
 3. Give the user both links, the PR and the live stage. The preview
    workflow adds the figure sheets and print previews to the PR as a
