@@ -196,7 +196,7 @@ When the user is happy, without waiting to be asked:
    other figures whenever shared code changed.
 2. Open the pull request, titled `Figure: <Name>`, its description like the
    other figure PRs: one line of the figure's traits, then
-   `Live stage: https://figure-<id>-three-panda.xoob.workers.dev/#<id>/<pose>`
+   `Live stage: https://figure-<id>-three-pandas.xoob.workers.dev/#<id>/<pose>`
    (the branch's Cloudflare preview).
 3. Give the user both links, the PR and the live stage. The preview
    workflow adds the figure sheets and print previews to the PR as a

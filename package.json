@@ -1,5 +1,5 @@
 {
-  "name": "three-panda",
+  "name": "three-pandas",
   "version": "1.0.0",
   "description": "Friends of BigPanda: posable panda figures built in code with three.js, shown on a live stage and exported as multi-colour 3D prints for Bambu Studio",
   "private": true,
