@@ -1,0 +1,11 @@
+{
+  "id": "leon",
+  "label": "Leon",
+  "codes": { "handsOnHips": "9FAE" },
+  "poses": ["handsOnHips"],
+  "eyes": "open",
+  "mouth": "grin",
+  "hair": { "style": "crop", "colour": "grey" },
+  "glasses": { "style": "halfRim", "colour": "dark" },
+  "props": []
+}
