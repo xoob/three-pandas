@@ -1308,8 +1308,9 @@ function wineGlassParts(m, name, frame) {
     make: () => lathe([[0, G.from], [stem, G.from], [0.11, G.from + 0.05], [0.148, G.wide - 0.07], [G.bowl, G.wide], [outer(G.level), G.level], [0, G.level]]) });
   m.add({ name: `${name}Rim`, role: 'eyes', parent: frame,
     make: () => lathe([[0, G.level], [outer(G.level), G.level], [G.rim, G.top - 0.012], [G.rim - 0.012, G.top], [G.rim - wall, G.top], [outer(G.level) - wall, G.level + 0.03], [0, G.level + 0.03]]) });
-  m.add({ name: `${name}Surface`, role: 'red', parent: frame, position: v3(0, G.level + 0.04, 0),
-    make: () => new THREE.CylinderGeometry(outer(G.level) - wall + 0.004, outer(G.level) - wall + 0.004, 0.02, 48) });
+  // the wine's surface inside the rim: 1 mm thick, so it survives as its own printed colour
+  m.add({ name: `${name}Surface`, role: 'red', parent: frame, position: v3(0, G.level + 0.055, 0),
+    make: () => new THREE.CylinderGeometry(outer(G.level) - wall + 0.004, outer(G.level) - wall + 0.004, 0.06, 48) });
   const F = G.foot;
   m.add({ name: `${name}Stem`, role: 'eyes', parent: frame,
     make: () => lathe([[0, F.y], [F.radius, F.y], [F.radius, F.y + F.height * 0.6], [stem + 0.02, F.y + F.height], [stem, F.y + F.height + 0.03], [stem, G.from + 0.01], [0, G.from + 0.01]]) });

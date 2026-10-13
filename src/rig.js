@@ -351,7 +351,7 @@ export const POSES = {
     // sides to the base, left paw gripping the barrel in front, the glass
     // thrown up in the right paw, leaning back
     head: { nod: -6, tilt: 5, turn: -6 },
-    armR: { raise: 108, forward: 30, twist: 90, bend: 30, wrist: -8 },
+    armR: { raise: 104, forward: 30, twist: 90, bend: 24, wrist: -8 },
     armL: { raise: 12, forward: 48, twist: -75, bend: 56 },
     legR: { spread: 48, swing: 8, knee: 10, toe: 30, stretch: 1.6 },
     legL: { spread: 48, swing: 8, knee: 10, toe: 30, stretch: 1.6 },

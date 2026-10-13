@@ -1,12 +1,11 @@
 {
   "id": "andrey",
   "label": "Andrey",
-  "codes": { "handsOnHips": "7B3C" },
-  "poses": ["handsOnHips"],
-  "eyes": "open",
-  "mouth": "smile",
+  "codes": { "ride": "7B3C" },
+  "poses": ["ride"],
+  "eyes": "closed",
+  "mouth": "grin",
   "snout": "strong",
-  "hair": { "style": "crew", "colour": "black" },
   "beard": { "style": "chin", "colour": "black" },
-  "props": []
+  "props": ["barrelRide", "glassRide"]
 }
