@@ -1,0 +1,12 @@
+{
+  "id": "barak",
+  "label": "Barak",
+  "codes": { "welcome": "AB4A" },
+  "poses": ["welcome"],
+  "eyes": "open",
+  "mouth": "beam",
+  "snout": "strong",
+  "hair": { "style": "short", "colour": "black" },
+  "beard": { "style": "goatee", "colour": "black" },
+  "props": []
+}
