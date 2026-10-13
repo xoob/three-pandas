@@ -15,28 +15,44 @@ and props.
 
 ## Interview
 
-Start `npm install` in the background, then get to know the panda. Follow the
-user's lead: what they volunteer (a photo, a pose they like, a name) beats
-any question you planned. Never ask about something already answered, and
-never about what does not read at 40 mm (eye colour, stubble, patterns,
-text, jewellery).
+Start `npm install` in the background, then get to know the panda: a short
+conversation, one round of cards, then pictures. Follow the user's lead:
+what they volunteer (a photo, a pose they like, a name) beats any question
+you planned. Never ask about something already answered, and never about
+what does not read at 40 mm (eye colour, stubble, patterns, text,
+jewellery). Keep every message short; one thing asked per message.
 
-1. One chat message: who is the panda for (themselves, a colleague, a team
-   mascot), the first name on the figure, a photo if they have one, and a
-   few words in their own voice: what they're known for, a hobby, a
-   favourite gadget, a pose they like, an MBTI type if they know it.
-2. Read the answer and the photo, and say what you took from them.
-3. At most one AskUserQuestion round (up to 4 questions, 2–4 options each;
-   "Other" is added for free text) for what is still open, built from the
-   question bank below. Skip it when nothing important is open. If the user
-   turns the cards down, carry on in chat and don't use them again.
+1. **Chat: who.** No cards. Ask who the panda is for (themselves, a
+   colleague, a team mascot) and the first name on the figure.
+2. **Chat: looks.** Ask for a photo or two: the face from the front, and if
+   they have one, a picture where they like how they stand or what they
+   hold. Without a photo, ask them to describe hair, facial hair and
+   glasses in a sentence. Say back what you read (the looks list below) and
+   let them correct it in chat. Looks are never asked as cards.
+3. **Cards: character.** One AskUserQuestion round, the only one of the
+   interview: the three character questions below (trope with MBTI via
+   Other, hobbies, mood). Leave out a question the chat already answered.
+   If the user turns the cards down, ask the same in chat and don't use
+   them again.
+4. **First render pass: three or four variants.** Before building any new
+   part, write the draft recipe and show one sheet of variants A to C or D
+   (`tools/variants.mjs`, see Check and show): the same looks in each, but a
+   different idea of the character, with its own pose and prop, and
+   outfit or expression where that belongs to the idea. Draw them from the
+   maps below, from what the photo and the chat suggested, and make one a
+   wildcard. Variants that differ only in colour are not variants. Use
+   existing kit parts as stand-ins and say in one line per variant what it
+   is, which part would be built new for it, and its filament list.
+5. **Chat: feedback.** Ask which variant is closest and what is off; a mix
+   ("A's pose with C's prop") is a fine answer. Then the summary (below) and
+   the build.
 
 Photo: read only hair silhouette, hair colour, facial hair and glasses from
 it. Never copy it into the repo, never describe the person beyond those four
 things in files, commits or the PR. The figure carries a first name only;
 its id is the lowercase first name, with an initial if taken (`hadas-n`).
 
-Question bank: looks (only what the photo left open):
+Looks (read from the photo, asked in chat only for what it left open):
 - Hair: `None, plain panda head` / `Short` (`crop` or `short`) / `Tall or
   textured on top` (`textured`) / `Long` (`long`); `topknot` (tied up, with
   `band` for a headband) via Other.
@@ -45,7 +61,7 @@ Question bank: looks (only what the photo left open):
   beard` (`full`); `ninja` (angular jaw beard) only when the photo shows one.
 - Glasses: `None` / `Frames` (`octagon` or `halfRim`) / `Shades`.
 
-Question bank: character:
+Character (the cards of step 3):
 - Which sounds most like them? (the question text invites an MBTI type via
   Other) `Runs the show: organised, decisive, on time` / `Deep in the
   problem: quiet, finds the bug nobody else can` / `The one everyone talks
@@ -56,7 +72,7 @@ Question bank: character:
 - Mood on the figure: `Cheerful, laughing` / `Calm and kind` / `Focused,
   intense` / `Zen, eyes closed`.
 
-Question bank: finishing (after applying the maps below):
+Finishing (not asked: the variants of step 4 show these choices instead):
 - Accent colour, one: `Blue` / `Green` / `Yellow` / `Red` (grey via Other).
 - Outfit: `Plain panda` / `Dress` / `Gi (wrapped robe with belt)`.
 - Pose: your best candidates, existing ones from `POSES` named with their
@@ -89,16 +105,20 @@ Maps (orientation, not law; the photo and the free text win):
 - Do not give a new figure another cast member's prop + pose pair (magnifier
   + `inspect` is the Detective) unless it is genuinely theirs.
 
-Summary, in chat, short: name and id; the three traits that read at 40 mm;
-filaments as a list (at most 4, white and black included); pose, prop, eyes
-and mouth; the new kit parts you will build; what you left out and why.
-Then build right away; the user corrects course on the first screenshots.
+Summary, in chat, short, after the feedback on the variants: name and id;
+the three traits that read at 40 mm; filaments as a list (at most 4, white
+and black included); pose, prop, eyes and mouth; the new kit parts you will
+build; what you left out and why. Then build right away; the user corrects
+course on the next screenshots.
 
 ## Working with the user
 
-- Show a first render early: the recipe with existing parts as stand-ins,
-  within the first few minutes, before building new parts. Then show each
-  new part as soon as it renders. Never go quiet for long stretches.
+- Show pictures early: the variants sheet of the interview, with existing
+  parts as stand-ins, within the first few minutes and before building new
+  parts. Then show each new part as soon as it renders. Never go quiet for
+  long stretches.
+- After the interview's one round of cards, talk in chat. Cards return only
+  when the user asks for them.
 - Filaments: count before you render. Every candidate you offer fits in 4
   filaments, and you label each with its list (e.g. "white, black, brown,
   purple"). When the user asks for a mix that does not fit, say so and offer
@@ -171,6 +191,17 @@ Chromium/Chrome binary if Playwright's own isn't installed):
 ```sh
 node tools/shots.mjs "<id>/5:<pose>:angle,<id>/5:<pose>:side,<id>/5:<pose>:front:focus=head" 700 760
 node tools/palette.mjs <id> eyes "open;alert;serene"   # one sheet comparing options of a field
+node tools/variants.mjs <id> variants.json "angle;front:focus=head"   # one sheet of whole variants (pose, props, outfit, face)
+```
+
+`variants.json` (keep it in `shots/`, which is not committed) is a list of
+labelled recipe overrides on the figure's draft recipe:
+
+```json
+[
+  { "label": "A · waves hello", "poses": ["hipWave"], "props": [], "eyes": "open", "mouth": "smile" },
+  { "label": "B · shows the numbers", "poses": ["wave", "hooray"], "props": ["tablet"], "eyes": "closed", "mouth": "grin" }
+]
 ```
 
 Always look at the screenshots yourself, then show them to the user (front,
