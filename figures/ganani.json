@@ -1,0 +1,14 @@
+{
+  "id": "ganani",
+  "label": "Ganani",
+  "codes": { "liftoff": "41E7" },
+  "poses": ["liftoff"],
+  "eyes": "wink",
+  "mouth": "beam",
+  "snout": "strong",
+  "spin": 30,
+  "hair": { "style": "textured", "colour": "black" },
+  "beard": { "style": "boxed", "colour": "black" },
+  "glasses": { "style": "shades", "colour": "green" },
+  "props": ["rocket"]
+}
