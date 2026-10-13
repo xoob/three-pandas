@@ -1347,32 +1347,51 @@ function bossGeometry({ size: [bw, bh], top, sunk, height }) {
   return facetGeometry(pos);
 }
 
-// glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
-// Mini panda, about 7 mm tall in print: a tiny seated panda made of blobs,
-// each ≥ 0.85 mm at print size: white body and head, black ears, arms, legs
-// and eye patches sunk into the head so they print flush. `floor` is the
-// height it sits on in `frame` (parts are named `<name>Body`, …).
-const MINI = { plate: [0.38, 0.06, 0.38], body: [0.13, 0.12, 0.115], head: [0.16, 0.135, 0.135] };
+// Mini panda: the figure itself at 1:5, as it stands in the cast: the same
+// rig and proportions (head, pear body with its markings, swept limbs, flat
+// feet) in the neutral stance, on its own round white base. About 8.5 mm tall
+// in print; every piece stays ≥ 0.85 mm (the wrist, the thinnest, is 0.95 mm).
+// Face: eye patches and nose only, as dark blobs sunk into the head so they
+// print flush. `position`/`quaternion` place the underside of its base in
+// `parent`; `sunk` (mini units) is how far the base reaches below that, to
+// fuse with what it stands on. Parts are named `<name>Body`, …
+const MINI = {
+  scale: 0.2,
+  base: { radius: 1.0, height: 0.3 }, // a little thicker than to scale (1 mm), so it prints
+  patch: [0.19, 0.17, 0.08], nose: [0.14, 0.12, 0.08], noseAt: [0, -0.2, HEAD.z],
+};
 
-function addMini(m, name, frame, floor) {
-  const P = MINI;
-  const headY = floor + 2 * P.body[1] - 0.03 + P.head[1];
-  m.add({ name: `${name}Body`, role: 'fur', parent: frame, position: v3(0, floor + P.body[1] - 0.01, 0),
-    make: () => ellipsoid(P.body, { detail: 4 }) });
-  m.add({ name: `${name}Head`, role: 'fur', parent: frame, position: v3(0, headY, 0.01),
-    make: () => ellipsoid(P.head, { detail: 4 }) });
+function addMini(m, name, parent, position, quaternion, sunk = 0) {
+  const frame = m.anchor(name, parent, position, quaternion);
+  frame.scale.setScalar(MINI.scale);
+  const B = MINI.base;
+  const j = posedJoints(''); // no pose: the neutral stance, arms hanging relaxed
+  const lift = v3(0, B.height - BASE.sink, 0); // onto its base, soles sunk in like the big one's
+  const at = (joint, local = v3()) => j[joint].localToWorld(local.clone()).add(lift);
+  const turn = (joint, q = new THREE.Quaternion()) => j[joint].getWorldQuaternion(new THREE.Quaternion()).multiply(q);
+  const part = (suffix, role, position, quaternion, make, print) => m.add({ name: name + suffix, role, parent: frame, position, quaternion, make, print });
+
+  part('Base', 'fur', v3(0, (B.height - sunk) / 2, 0), undefined, () => new THREE.CylinderGeometry(B.radius, B.radius, B.height + sunk, 40));
+  part('Body', 'marked', at('pelvis', BODY.offset), turn('pelvis'), () => ellipsoid(BODY.radii.toArray(), { detail: 8, deform: pear }),
+    { field: { ...MARKINGS, radii: BODY.radii.toArray(), pear: PEAR, role: 'black' } });
+  part('Head', 'fur', at('head'), turn('head'), () => ellipsoid(HEAD.toArray(), { detail: 10, deform: cheeks }));
+  const nose = onEllipsoid(HEAD, v3(...MINI.noseAt));
+  part('Nose', 'black', at('head', nose.p), turn('head', orientZ(nose.n)), () => ellipsoid(MINI.nose, { detail: 3 }));
   for (const [side, s] of Object.entries(SIDES)) {
-    m.add({ name: `${name}Ear${side}`, role: 'black', parent: frame, position: v3(s * 0.115, headY + 0.105, -0.01),
-      make: () => ellipsoid([0.055, 0.055, 0.04], { detail: 3 }) });
-    m.add({ name: `${name}Arm${side}`, role: 'black', parent: frame, position: v3(s * 0.125, floor + 0.13, 0.03),
-      make: () => ellipsoid([0.05, 0.085, 0.055], { detail: 3 }) });
-    m.add({ name: `${name}Leg${side}`, role: 'black', parent: frame, position: v3(s * 0.08, floor + 0.04, 0.07),
-      make: () => ellipsoid([0.065, 0.055, 0.085], { detail: 3 }) });
-    m.add({ name: `${name}Patch${side}`, role: 'black', parent: frame, position: v3(s * 0.065, headY + 0.01, 0.1),
-      make: () => ellipsoid([0.042, 0.048, 0.04], { detail: 3 }) });
+    const ear = onEllipsoid(HEAD, EAR(s));
+    part(`Ear${side}`, 'black', at('head', ear.p.clone().addScaledVector(ear.n, 0.03)), turn('head', orientZ(v3(0.35 * s, 0.2, 1), ear.n)),
+      () => ellipsoid([0.24, 0.22, 0.14], { detail: 4 }));
+    const eye = onEllipsoid(HEAD, v3(s * EYE.plain.x, EYE.plain.y, HEAD.z));
+    part(`Patch${side}`, 'black', at('head', eye.p), turn('head', orientZ(eye.n).multiply(new THREE.Quaternion().setFromAxisAngle(Z, -s * EYE.plain.patch.droop))),
+      () => ellipsoid(MINI.patch, { detail: 4 }));
+    for (const [limb, chain, up] of [['Arm', ARM, Y], ['Leg', LEG, Z]]) {
+      part(limb + side, 'black', undefined, undefined, () => sweep(chain.joints.map((n) => at(n + side)), chain.radii, { caps: 'both', up, radial: 10 }));
+    }
+    part(`Foot${side}`, 'black', at(`ankle${side}`, FOOT.offset), turn(`ankle${side}`), () => ellipsoid(FOOT.radii, { detail: 5, deform: flatSole }));
   }
 }
 
+// glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
 export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades, round: addRound };
 
 export const PROPS = {
@@ -1508,31 +1527,28 @@ export const PROPS = {
       make: () => new THREE.CylinderGeometry(0.025, 0.025, 0.05, 16) });
   },
 
-  // mini panda fresh off the printer: a tiny seated panda on a yellow build
-  // plate, standing on the open right paw (Present pose). Blobs only, each
-  // ≥ 0.85 mm at print size: white body and head, black ears, arms, legs and
-  // eye patches sunk into the head so they print flush
+  // mini panda fresh off the printer: one mini figure (addMini) on a yellow
+  // build plate, standing on the open right paw (Present pose)
   miniPanda(m) {
+    const plate = [0.52, 0.06, 0.52];
     const paw = posedJoints('present').pawR.getWorldPosition(new THREE.Vector3());
     const R = ARM.radii[ARM.radii.length - 1];
     // upright on the paw, turned a little toward the viewer's side of the figure
-    const frame = worldAnchor(m, 'miniPanda', 'pawR', 'present', paw.clone().add(v3(-0.05, R - 0.035, 0.03)),
+    const frame = worldAnchor(m, 'miniPlateFrame', 'pawR', 'present', paw.clone().add(v3(-0.07, R - 0.035, 0.03)),
       new THREE.Quaternion().setFromAxisAngle(Y, THREE.MathUtils.degToRad(-12)));
-    const top = MINI.plate[1];
-    m.add({ name: 'miniPlate', role: 'yellow', parent: frame, position: v3(0, top / 2, 0),
-      make: () => new RoundedBoxGeometry(...MINI.plate, 4, 0.025) });
-    addMini(m, 'mini', frame, top);
+    m.add({ name: 'miniPlate', role: 'yellow', parent: frame, position: v3(0, plate[1] / 2, 0),
+      make: () => new RoundedBoxGeometry(...plate, 4, 0.025) });
+    addMini(m, 'mini', frame, v3(0, plate[1], 0), undefined, 0.1);
   },
 
-  // the crew: five mini pandas (the five of edition one) sitting in an arc on
-  // the base in front of the feet, each facing outward. Black and white only,
-  // so they cost no filament; they sink a little into the base and fuse with it
+  // the crew: five mini figures (the five of edition one) standing in an arc
+  // on the base in front of the feet, each facing outward. Black and white
+  // only, so they cost no filament; their bases reach into the big base and fuse with it
   miniCrew(m) {
-    const C = { count: 5, radius: 0.82, spread: 62, sunk: 0.02 }; // arc radius from the centre; degrees from the front to the outer ones
+    const C = { count: 5, radius: 0.84, spread: 68, sunk: 0.1 }; // arc radius from the centre; degrees from the front to the outer ones
     for (let i = 0; i < C.count; i++) {
       const a = THREE.MathUtils.degToRad(C.spread * (i / (C.count - 1) * 2 - 1));
-      const frame = m.anchor(`crew${i}`, null, v3(C.radius * Math.sin(a), 0, C.radius * Math.cos(a)), new THREE.Quaternion().setFromAxisAngle(Y, a));
-      addMini(m, `crew${i}`, frame, -C.sunk);
+      addMini(m, `crew${i}`, null, v3(C.radius * Math.sin(a), 0, C.radius * Math.cos(a)), new THREE.Quaternion().setFromAxisAngle(Y, a), C.sunk);
     }
   },
 
