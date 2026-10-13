@@ -1,0 +1,12 @@
+{
+  "id": "andrey",
+  "label": "Andrey",
+  "codes": { "handsOnHips": "7B3C" },
+  "poses": ["handsOnHips"],
+  "eyes": "open",
+  "mouth": "smile",
+  "snout": "strong",
+  "hair": { "style": "crop", "colour": "black" },
+  "beard": { "style": "boxed", "colour": "black" },
+  "props": []
+}
