@@ -330,10 +330,14 @@ const slots = CENTRE_OUT.map((c, i) => {
   return el;
 });
 
-// The phone carousel: of n figures, figure i stands at i·360°/n + angle on an
+// The phone carousel: of n seats, seat i stands at i·360°/n + angle on an
 // ellipse, the one at 0° in front. Selecting turns the ring the short way
-// round; it stays put on deselect.
-const step = () => 360 / figures.length;
+// round; it stays put on deselect. The seats are the edition's figures, and
+// in the next edition its free spots after them, so the pandas still to come
+// keep their places on the ring.
+const FREE_SEATS = slots.filter((_, i) => !taken.has(i + 1)).map((el) => ({ el, empty: true, depth: 1 }));
+const seats = () => (state.edition === 'next' && figures.length ? [...figures, ...FREE_SEATS] : figures);
+const step = () => 360 / seats().length;
 const ring = { front: undefined, angle: 0, target: 0, vel: 0 }; // vel: degrees per second
 // The ring settles on a slightly springy (underdamped) spring: a touch of overshoot, then rest.
 const SPRING = { stiffness: 70, damping: 11 };
@@ -352,15 +356,23 @@ function turnRing(f) {
   ring.target += d;
 }
 function placeRing() {
-  for (const [i, f] of figures.entries()) {
-    const s = f.el.style;
-    f.depth = 1; // 1 in front, 0 at the back of the ring
-    if (!phone.matches) { s.left = s.bottom = s.zIndex = ''; s.removeProperty('--ring'); continue; }
-    const a = deg(i * step() + ring.angle), k = f.depth = (Math.cos(a) + 1) / 2;
-    s.left = `${50 + 39 * Math.sin(a)}%`;
-    s.bottom = `${(1 - k) * 38}%`;
-    s.zIndex = Math.round(k * 10);
-    s.setProperty('--ring', (0.47 + 0.53 * k * k).toFixed(4));
+  if (!phone.matches) {
+    for (const f of [...figures, ...FREE_SEATS]) {
+      const s = f.el.style;
+      f.depth = 1;
+      s.left = s.bottom = s.zIndex = s.opacity = '';
+      s.removeProperty('--ring');
+    }
+  } else {
+    for (const [i, f] of seats().entries()) {
+      const s = f.el.style;
+      const a = deg(i * step() + ring.angle), k = f.depth = (Math.cos(a) + 1) / 2; // 1 in front, 0 at the back of the ring
+      s.left = `${50 + 39 * Math.sin(a)}%`;
+      s.bottom = `${(1 - k) * 38}%`;
+      s.zIndex = Math.round(k * 10);
+      s.setProperty('--ring', (0.47 + 0.53 * k * k).toFixed(4));
+      if (f.empty) s.opacity = (0.25 + 0.75 * k * k).toFixed(3); // darker toward the back, like the figures' light
+    }
   }
   setLights();
 }
@@ -413,8 +425,18 @@ const endDrag = () => {
   const turn = Math.sign(steps) * Math.min(Math.floor(Math.abs(steps) + 1 - SWIPE.tip), Math.round(dragged) + 1);
   ring.target = (Math.round(d.from / STEP) + turn) * STEP;
   ring.vel = THREE.MathUtils.clamp(d.v, -400, 400); // the flick carries into the spring, a little
-  const n = figures.length;
-  ring.front = figures[((Math.round(-ring.target / STEP) % n) + n) % n];
+  const on = seats(), n = on.length;
+  const seat = (t) => on[((Math.round(-t / STEP) % n) + n) % n];
+  // a swipe never stops on an empty spot: it stops at the last panda it
+  // passed, or, having passed none, carries on to the next one
+  if (seat(ring.target).empty) {
+    const start = Math.round(d.from / STEP), dir = Math.sign(turn);
+    let t = ring.target;
+    while (seat(t).empty) t -= dir * STEP;
+    if (Math.round(t / STEP) === start) for (t = ring.target; seat(t).empty; t += dir * STEP);
+    ring.target = t;
+  }
+  ring.front = seat(ring.target);
   if (state.sel) set({ sel: ring.front.id, menu: false });
   else render();
 };
@@ -606,10 +628,11 @@ function render() {
   }
   setLights();
   const SLOT_M = ['m-back m-b1', 'm-back m-b2', 'm-hero', 'm-back m-b3', 'm-back m-b4'];
-  // empty spots: the next edition's free ones; on the phone only while the carousel is empty
+  // empty spots: the next edition's free ones; on the phone a row of their own
+  // while the edition has no panda, else seats on the carousel
   slots.forEach((el, i) => {
-    el.hidden = isGang || taken.has(i + 1) || (phone.matches && figures.length > 0);
-    el.className = `slot p${i + 1} ${SLOT_M[i]}`;
+    el.hidden = isGang || taken.has(i + 1);
+    el.className = `slot p${i + 1} ${phone.matches && figures.length ? 'on-ring' : SLOT_M[i]}`;
   });
 
   $('#dock').innerHTML = dockHtml(sel, isGang, pipelineOn, customizeOn);
