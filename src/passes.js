@@ -71,6 +71,7 @@ export const FILAMENTS = {
   red: { name: 'Red', colour: '#E03131' },
   grey: { name: 'Grey', colour: '#8E9089' },
   brown: { name: 'Brown', colour: '#7A4128' },
+  purple: { name: 'Purple', colour: '#6A3FB8' },
 };
 
 // Limb chains: joint names (without side suffix) and the tube radius at each.
@@ -112,6 +113,7 @@ export const COLOURS = {
   red: { clay: 0xaaa39a, look: 0xe03131, roughness: 0.42, wire: 0xffb3b3, filament: 'red' },
   grey: { clay: 0xa39c94, look: 0x8e9089, roughness: 0.6, wire: 0xd0d4dc, filament: 'grey' }, // Bambu PLA Basic Gray
   brown: { clay: 0x9c958d, look: 0x7a4128, roughness: 0.6, wire: 0xe0b8a0, filament: 'brown' }, // warm chestnut
+  purple: { clay: 0xa69f97, look: 0x6a3fb8, roughness: 0.55, wire: 0xd2bcff, filament: 'purple' },
   dark: { clay: 0x77716b, look: 0x2b2d33, roughness: 0.5, wire: 0x9aa0b0, filament: 'black' },
   black: { clay: 0x8d8780, look: 0x24252c, roughness: 0.6, wire: 0x3dff6e, filament: 'black' }, // a touch lighter than the fur
 };
@@ -406,13 +408,16 @@ function detailsPass(m) {
   m.snout = SNOUTS[v.snout];
   addMarkings(m);
   addSnout(m, v); // reshapes the head, so it runs before anything is projected onto the face
-  if (v.outfit) m.group('outfit', () => addOutfit(m, v.outfit, { offset: BODY.offset, radii: BODY.radii, pear: PEAR }));
+  if (v.outfit) m.group('outfit', () => addOutfit(m, v.outfit, { offset: BODY.offset, radii: BODY.radii, pear: PEAR, arm: ARM }));
   if (v.hair) m.group('hair', () => addHair(m, v.hair, HEAD_SHELL));
   if (v.beard) {
     const cy = mouthY(m.snout);
     m.group('beard', () => addBeard(m, v.beard, {
       z: (x, y) => faceZ(m.snout, x, y), mouth: [0, cy], lip: cy + GRIN.height * 0.45,
       opening: OPEN_MOUTHS.includes(v.mouth) ? grinShape(0).map(([x, y]) => [x, y + cy]) : null,
+      // a closed mouth's lips: the outline around its line, for beards that leave them bare
+      lips: MOUTH_LINES[v.mouth] ? strokeOutline(MOUTH_LINES[v.mouth](m.snout).map((p) => [p.x, p.y]), LIPS) : null,
+      head: HEAD_SHELL,
     }));
   }
   addFace(m, v);
@@ -519,14 +524,21 @@ function snoutCurve(S, width, y, shift = 0) {
   return pts;
 }
 
-export const MOUTHS = {
-  smile: (m) => addMouthLine(m, 'smile', snoutCurve(m.snout, 0.12, (t) => m.snout.centre - 0.035 - 0.035 * (1 - t * t))),
+// the closed mouths: each a line on the front of snout S
+const MOUTH_LINES = {
+  smile: (S) => snoutCurve(S, 0.12, (t) => S.centre - 0.035 - 0.035 * (1 - t * t)),
   // small worried mouth, slightly off-centre, corners down
-  frown: (m) => addMouthLine(m, 'frown', snoutCurve(m.snout, 0.06, (t) => m.snout.centre - 0.07 + 0.018 * (1 - t * t) - 0.006 * t, 0.015)),
+  frown: (S) => snoutCurve(S, 0.06, (t) => S.centre - 0.07 + 0.018 * (1 - t * t) - 0.006 * t, 0.015),
   // calm closed mouth: a short, even line with the corners lifted a touch
-  calm: (m) => addMouthLine(m, 'calm', snoutCurve(m.snout, 0.085, (t) => m.snout.centre - 0.055 - 0.012 * (1 - t * t))),
+  calm: (S) => snoutCurve(S, 0.085, (t) => S.centre - 0.055 - 0.012 * (1 - t * t)),
   // firm mouth: a short flat line low on the muzzle, its corners a touch down (sits between a moustache and a chin beard)
-  firm: (m) => addMouthLine(m, 'firm', snoutCurve(m.snout, 0.08, (t) => m.snout.centre - 0.105 + 0.007 * (1 - t * t))),
+  firm: (S) => snoutCurve(S, 0.08, (t) => S.centre - 0.105 + 0.007 * (1 - t * t)),
+};
+// how far around a closed mouth's line a beard that shows the lips stays clear (beard.js `lips`)
+const LIPS = 0.028;
+
+export const MOUTHS = {
+  ...Object.fromEntries(Object.entries(MOUTH_LINES).map(([style, line]) => [style, (m) => addMouthLine(m, style, line(m.snout))])),
   grin: (m) => addGrin(m),
   beam: (m) => addBeam(m),
 };
@@ -1039,6 +1051,57 @@ function addShades(m, colour, v) {
   });
 }
 
+// Round wire glasses: thin circular rims with clear lenses, a slim arched
+// bridge high between them and slim temples. Lenses centred like the other
+// styles, so the eye patches sit the same; the rims lie inside the patches,
+// a bright ring on black. Printed, the wire is PRINT.minLine wide and the
+// front grows backward like the octagon frames, so it survives its supports.
+const ROUND = {
+  lens: { radius: 0.165 }, // opening around the lens centre
+  rim: { width: 0.026, depth: 0.04 },
+  bridge: { y: 0.07, rise: 0.035, height: 0.026, depth: 0.03 }, // ends at this height on the rims, arching up by `rise`
+  endPiece: { height: 0.045, back: 0.07 },
+  temple: { inner: 0.65, thickness: 0.03, height: 0.035, backTo: -0.34, drop: 0.07 },
+  print: { depth: 0.11 },
+};
+
+function addRound(m, colour, v) {
+  const H = ROUND, F = GLASSES.front;
+  const minLine = (x) => (m.style.print ? Math.max(x, PRINT.minLine) : x);
+  const w = minLine(H.rim.width), r = H.lens.radius;
+  const depth = m.style.print ? H.print.depth : H.rim.depth;
+  const circle = (radius, n = 48) => Array.from({ length: n }, (_, i) => new THREE.Vector2(radius * Math.cos((i / n) * Math.PI * 2), radius * Math.sin((i / n) * Math.PI * 2)));
+  for (const [side, s] of Object.entries(SIDES)) {
+    const lens = lensFrame(s);
+    const frame = m.anchor(`lens${side}`, 'head', lens.center, lens.quaternion);
+    const ring = new THREE.Shape(circle(r + w));
+    ring.holes.push(new THREE.Path(circle(r).reverse()));
+    // the front face stays put; a deeper (printed) rim grows backward
+    m.add({ name: `rim${side}`, role: colour, parent: frame,
+      make: () => new THREE.ExtrudeGeometry(ring, {
+        depth: depth - 0.012, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2, curveSegments: 1,
+      }).translate(0, 0, H.rim.depth / 2 - depth + 0.006) });
+    m.add({ name: `glass${side}`, role: 'glass', parent: frame, print: false, shadow: false,
+      make: () => new THREE.ShapeGeometry(new THREE.Shape(circle(r + w / 2))).translate(0, 0, -0.005) });
+  }
+  const centre = F.gap / 2 + GLASSES.halfWidth;
+  // the end pieces leave the rims at the height of the lens centres, where a circle reaches furthest out
+  const E = { ...H.endPiece, height: minLine(H.endPiece.height) };
+  addTemples(m, colour, v, {
+    lensOuter: centre + r + w, topY: F.y + E.height / 2, zFront: F.z + H.rim.depth / 2,
+    endPiece: E,
+    temple: { ...H.temple, thickness: minLine(H.temple.thickness), height: minLine(H.temple.height) },
+  });
+  // bridge: a slim arch between the rims, its ends sunk into them
+  const B = H.bridge, bh = minLine(B.height), bd = minLine(B.depth);
+  const x0 = centre - Math.sqrt(Math.max(0, (r + w / 2) ** 2 - B.y ** 2)) + 0.01; // where the rim is at height B.y
+  const arch = Array.from({ length: 9 }, (_, i) => { const t = -1 + i / 4; return v3(x0 * t, F.y + B.y + B.rise * (1 - t * t), F.z); });
+  m.add({
+    name: 'bridge', role: colour, parent: 'head',
+    make: () => sweep(arch, arch.map(() => bh / 2), { radial: 12, up: Z }).scale(1, 1, bd / bh).translate(0, 0, F.z * (1 - bd / bh)),
+  });
+}
+
 // A decal projected onto the head's actual surface, kept in head space.
 /** Frame of a decal on the head surface: origin at `at.p`, +Z along `at.n`, spun about Z. */
 function decalFrame(at, spin) {
@@ -1292,8 +1355,52 @@ function bossGeometry({ size: [bw, bh], top, sunk, height }) {
   return facetGeometry(pos);
 }
 
+// Mini panda: the figure itself at 1:5, as it stands in the cast: the same
+// rig and proportions (head, pear body with its markings, swept limbs, flat
+// feet) in the neutral stance, on its own round white base. About 8.5 mm tall
+// in print; every piece stays ≥ 0.85 mm (the wrist, the thinnest, is 0.95 mm).
+// Face: eye patches and nose only, as dark blobs sunk into the head so they
+// print flush. `position`/`quaternion` place the underside of its base in
+// `parent`; `sunk` (mini units) is how far the base reaches below that, to
+// fuse with what it stands on. Parts are named `<name>Body`, …
+const MINI = {
+  scale: 0.2,
+  base: { radius: 1.0, height: 0.3 }, // a little thicker than to scale (1 mm), so it prints
+  patch: [0.19, 0.17, 0.08], nose: [0.14, 0.12, 0.08], noseAt: [0, -0.2, HEAD.z],
+};
+
+function addMini(m, name, parent, position, quaternion, sunk = 0) {
+  const frame = m.anchor(name, parent, position, quaternion);
+  frame.scale.setScalar(MINI.scale);
+  const B = MINI.base;
+  const j = posedJoints(''); // no pose: the neutral stance, arms hanging relaxed
+  const lift = v3(0, B.height - BASE.sink, 0); // onto its base, soles sunk in like the big one's
+  const at = (joint, local = v3()) => j[joint].localToWorld(local.clone()).add(lift);
+  const turn = (joint, q = new THREE.Quaternion()) => j[joint].getWorldQuaternion(new THREE.Quaternion()).multiply(q);
+  const part = (suffix, role, position, quaternion, make, print) => m.add({ name: name + suffix, role, parent: frame, position, quaternion, make, print });
+
+  part('Base', 'fur', v3(0, (B.height - sunk) / 2, 0), undefined, () => new THREE.CylinderGeometry(B.radius, B.radius, B.height + sunk, 40));
+  part('Body', 'marked', at('pelvis', BODY.offset), turn('pelvis'), () => ellipsoid(BODY.radii.toArray(), { detail: 8, deform: pear }),
+    { field: { ...MARKINGS, radii: BODY.radii.toArray(), pear: PEAR, role: 'black' } });
+  part('Head', 'fur', at('head'), turn('head'), () => ellipsoid(HEAD.toArray(), { detail: 10, deform: cheeks }));
+  const nose = onEllipsoid(HEAD, v3(...MINI.noseAt));
+  part('Nose', 'black', at('head', nose.p), turn('head', orientZ(nose.n)), () => ellipsoid(MINI.nose, { detail: 3 }));
+  for (const [side, s] of Object.entries(SIDES)) {
+    const ear = onEllipsoid(HEAD, EAR(s));
+    part(`Ear${side}`, 'black', at('head', ear.p.clone().addScaledVector(ear.n, 0.03)), turn('head', orientZ(v3(0.35 * s, 0.2, 1), ear.n)),
+      () => ellipsoid([0.24, 0.22, 0.14], { detail: 4 }));
+    const eye = onEllipsoid(HEAD, v3(s * EYE.plain.x, EYE.plain.y, HEAD.z));
+    part(`Patch${side}`, 'black', at('head', eye.p), turn('head', orientZ(eye.n).multiply(new THREE.Quaternion().setFromAxisAngle(Z, -s * EYE.plain.patch.droop))),
+      () => ellipsoid(MINI.patch, { detail: 4 }));
+    for (const [limb, chain, up] of [['Arm', ARM, Y], ['Leg', LEG, Z]]) {
+      part(limb + side, 'black', undefined, undefined, () => sweep(chain.joints.map((n) => at(n + side)), chain.radii, { caps: 'both', up, radial: 10 }));
+    }
+    part(`Foot${side}`, 'black', at(`ankle${side}`, FOOT.offset), turn(`ankle${side}`), () => ellipsoid(FOOT.radii, { detail: 5, deform: flatSole }));
+  }
+}
+
 // glasses styles for the `glasses` slot: (model, colour, figure) => adds the parts
-export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades };
+export const GLASSES_STYLES = { octagon: addGlasses, halfRim: addHalfRim, shades: addShades, round: addRound };
 
 export const PROPS = {
   tablet: addTablet,
@@ -1426,6 +1533,31 @@ export const PROPS = {
     m.add({ name: 'stopwatchButton', role: 'grey', parent: frame, position: v3(0.12, 0.13, 0),
       quaternion: new THREE.Quaternion().setFromAxisAngle(Z, -0.75),
       make: () => new THREE.CylinderGeometry(0.025, 0.025, 0.05, 16) });
+  },
+
+  // mini panda fresh off the printer: one mini figure (addMini) on a yellow
+  // build plate, standing on the open right paw (Present pose)
+  miniPanda(m) {
+    const plate = [0.52, 0.06, 0.52];
+    const paw = posedJoints('present').pawR.getWorldPosition(new THREE.Vector3());
+    const R = ARM.radii[ARM.radii.length - 1];
+    // upright on the paw, turned a little toward the viewer's side of the figure
+    const frame = worldAnchor(m, 'miniPlateFrame', 'pawR', 'present', paw.clone().add(v3(-0.07, R - 0.035, 0.03)),
+      new THREE.Quaternion().setFromAxisAngle(Y, THREE.MathUtils.degToRad(-12)));
+    m.add({ name: 'miniPlate', role: 'yellow', parent: frame, position: v3(0, plate[1] / 2, 0),
+      make: () => new RoundedBoxGeometry(...plate, 4, 0.025) });
+    addMini(m, 'mini', frame, v3(0, plate[1], 0), undefined, 0.1);
+  },
+
+  // the crew: five mini figures (the five of edition one) standing in an arc
+  // on the base in front of the feet, each facing outward. Black and white
+  // only, so they cost no filament; their bases reach into the big base and fuse with it
+  miniCrew(m) {
+    const C = { count: 5, radius: 0.84, spread: 68, sunk: 0.1 }; // arc radius from the centre; degrees from the front to the outer ones
+    for (let i = 0; i < C.count; i++) {
+      const a = THREE.MathUtils.degToRad(C.spread * (i / (C.count - 1) * 2 - 1));
+      addMini(m, `crew${i}`, null, v3(C.radius * Math.sin(a), 0, C.radius * Math.cos(a)), new THREE.Quaternion().setFromAxisAngle(Y, a), C.sunk);
+    }
   },
 
   // toy rocket lifting off beside the figure (his right), standing on a column

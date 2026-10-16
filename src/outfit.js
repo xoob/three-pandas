@@ -9,7 +9,10 @@
 // A belt sits proud of the outfit at the waist, with a small buckle or a cloth
 // knot with short hanging ends in front; a sash may run across the chest from
 // one shoulder to the other hip. Everything is parented to the pelvis, so it
-// follows the body through every pose.
+// follows the body through every pose. An outfit with `sleeves` also covers
+// the arms down to the wrists (tubes re-swept with the arms in every pose),
+// one with a `hood` carries it rolled up on the upper back, and a `pocket`
+// is a raised patch on the belly.
 //
 // Positions on the body are unit-sphere heights t (−1 bottom … 1 top); angles
 // around the body are azimuths a (0 = front, + toward its left).
@@ -17,6 +20,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { v3, Y, sweep } from './shapes.js';
+import { SIDES } from './rig.js';
 
 export const OUTFITS = {
   // sleeveless dress: straps up at the shoulders (the arms come out of it),
@@ -44,6 +48,27 @@ export const OUTFITS = {
     collar: { height: 0.11, proud: 0.025 }, // a dark band along the neckline: the robe's lapels
     thickness: 0.03,
   },
+  // hoodie: a sweatshirt hugging the body from a round neck to a ribbed hem
+  // at the hips, sleeves down to the wrists (the paws stay out), the hood
+  // lying rolled up on the upper back under the head, and a pouch pocket on
+  // the belly. No belt.
+  hoodie: {
+    top: 0.82, skirt: -0.56,
+    neck: { front: 0.1, width: 0.9, back: 0, backWidth: 1.4 },
+    hem: { y: -0.07, flare: 0.015, belly: 0.012, lip: 0.03 }, // a short, thick-lipped drop: the rib band
+    pleats: { count: 0, depth: 0 },
+    // sleeves: over the arm tubes from the shoulder to `to` (share of the arm's
+    // joint chain; 0.75 = the wrist), `cuff` thicker over the last `band` of it
+    sleeves: { to: 0.72, cuff: 0.018, band: 0.1 },
+    // hood: a roll around the back of the neck at body height `t`, reaching
+    // `span` radians to each side of the back, thin at its ends and `radius[1]`
+    // thick in the middle, flattened to `flatten` of its height
+    hood: { t: 0.5, span: 1.45, radius: [0.05, 0.15], flatten: 0.8 },
+    // pouch pocket: raised by `proud` between body heights `t`, `halfAngle`
+    // wide at its bottom and top (a trapezoid), edges `soft` radians wide
+    pocket: { t: [-0.5, -0.1], halfAngle: [0.66, 0.44], proud: 0.028, soft: 0.07 },
+    thickness: 0.03,
+  },
 };
 
 const SINK = 0.02; // the inside, under the body surface
@@ -62,10 +87,12 @@ export function addOutfit(m, slot, body) {
     name: 'outfit', role: slot.colour, parent: 'pelvis', position: body.offset,
     make: (st) => dressGeometry(style, body, thickness(st)),
   });
-  m.add({
-    name: 'belt', role: 'dark', parent: 'pelvis', position: body.offset,
-    make: (st) => beltGeometry(style, body, thickness(st)),
-  });
+  if (style.belt) {
+    m.add({
+      name: 'belt', role: 'dark', parent: 'pelvis', position: body.offset,
+      make: (st) => beltGeometry(style, body, thickness(st)),
+    });
+  }
   if (style.collar) {
     m.add({
       name: 'collar', role: 'dark', parent: 'pelvis', position: body.offset,
@@ -73,6 +100,29 @@ export function addOutfit(m, slot, body) {
     });
   }
   const R = body.radii;
+  const S = style.sleeves;
+  if (S) {
+    for (const side of Object.keys(SIDES)) {
+      m.add({
+        name: `sleeve${side}`, role: slot.colour, dynamic: true, // re-swept with the arm after every pose change
+        make: (st, prev) => sleeveGeometry(S, body.arm, body.arm.joints.map((j) => m.jointPosition(j + side)), thickness(st), prev),
+      });
+    }
+  }
+  const H = style.hood;
+  if (H) {
+    const pts = [], radii = [];
+    for (let i = 0; i <= 16; i++) {
+      const a = Math.PI - H.span + 2 * H.span * (i / 16), f = 1 - Math.abs(i / 8 - 1);
+      const rad = H.radius[0] + (H.radius[1] - H.radius[0]) * f * f * (3 - 2 * f);
+      const r = bodyRadius(body, H.t) + style.thickness + rad * 0.35; // lying on the outfit, sunk into it
+      pts.push(v3(r * Math.sin(a), R.y * H.t / H.flatten, r * Math.cos(a) * R.z / R.x));
+      radii.push(rad);
+    }
+    m.add({ name: 'hood', role: slot.colour, parent: 'pelvis', position: body.offset,
+      make: () => sweep(pts, radii, { radial: 16, up: Y }).scale(1, H.flatten, 1) });
+  }
+  if (!style.belt) return;
   const front = bodyRadius(body, style.belt.t) + style.thickness + style.belt.proud; // the belt's face at the front
   const onBelt = (d) => body.offset.clone().add(v3(0, R.y * style.belt.t, front * R.z / R.x + d / 2 - 0.03));
   // printed, the belt stands further out, so what sits on it grows forward by the difference
@@ -99,21 +149,43 @@ export function addOutfit(m, slot, body) {
         make: (st) => new RoundedBoxGeometry(E.width, E.length, 0.04 + thickness(st), 2, 0.012) });
     }
   }
-  const S = style.sash;
-  if (S) {
+  const C = style.sash;
+  if (C) {
     // a cord around the body on a tilted plane: highest over the left shoulder,
     // lowest at the right hip; two capped halves that overlap at the sides
     const point = (a) => {
-      const t = (S.high + S.low) / 2 + ((S.high - S.low) / 2) * Math.sin(a);
-      const r = bodyRadius(body, t) + style.thickness + S.radius * 0.6;
+      const t = (C.high + C.low) / 2 + ((C.high - C.low) / 2) * Math.sin(a);
+      const r = bodyRadius(body, t) + style.thickness + C.radius * 0.6;
       return v3(r * Math.sin(a), R.y * t, r * Math.cos(a) * R.z / R.x);
     };
     for (const [name, a0] of [['sashFront', -Math.PI / 2], ['sashBack', Math.PI / 2]]) {
       const pts = Array.from({ length: 25 }, (_, i) => point(a0 - 0.2 + (Math.PI + 0.4) * (i / 24)));
       m.add({ name, role: 'dark', parent: 'pelvis', position: body.offset,
-        make: () => sweep(pts, pts.map(() => S.radius), { radial: 12, up: Y }) });
+        make: () => sweep(pts, pts.map(() => C.radius), { radial: 12, up: Y }) });
     }
   }
+}
+
+/**
+ * A sleeve: a tube along the arm's own curve (through `joints`, the arm's
+ * joint positions) from the shoulder to `S.to`, standing `thickness` off the
+ * arm tube (radii `arm.radii`), with a thicker cuff and a rounded end.
+ */
+function sleeveGeometry(S, arm, joints, thickness, prev) {
+  const curve = new THREE.CatmullRomCurve3(joints, false, 'centripetal');
+  const spans = joints.length - 1, N = 20;
+  const pts = [], radii = [];
+  for (let i = 0; i <= N; i++) {
+    const t = S.to * (i / N);
+    const k = Math.min(Math.floor(t * spans), spans - 1), f = t * spans - k;
+    const r = arm.radii[k] + (arm.radii[k + 1] - arm.radii[k]) * f * f * (3 - 2 * f);
+    pts.push(curve.getPoint(t));
+    radii.push(r + thickness + (t > S.to - S.band ? S.cuff : 0));
+  }
+  // the end: closed over a short taper, like a rolled cuff
+  pts.push(pts[N].clone().addScaledVector(curve.getTangent(S.to), 0.03));
+  radii.push(radii[N] * 0.45);
+  return sweep(pts, radii, { caps: 'both', up: Y, rings: prev?.userData.rings }, prev);
 }
 
 // body silhouette (x) at height t
@@ -152,9 +224,17 @@ function dressGeometry(style, body, thickness) {
   return loft((a) => {
     const top = style.top - style.neck.front * vee(a, style.neck.width) - style.neck.back * scoop(a - Math.PI, style.neck.backWidth);
     const outer = [], inner = [];
+    const P = style.pocket;
+    const pocket = (t) => { // how far the pouch pocket stands off the outfit here
+      if (!P) return 0;
+      const f = (t - P.t[0]) / (P.t[1] - P.t[0]);
+      const half = P.halfAngle[0] + (P.halfAngle[1] - P.halfAngle[0]) * f;
+      const edge = (d) => { const k = Math.min(1, Math.max(0, d / P.soft)); return k * k * (3 - 2 * k); };
+      return P.proud * edge(half - Math.abs(wrap(a))) * edge((Math.min(t - P.t[0], P.t[1] - t)) * 2);
+    };
     for (let i = 0; i <= STEPS; i++) {
       const t = top + (style.skirt - top) * (i / STEPS);
-      outer.push([radius(t) + thickness, y(t)]);
+      outer.push([radius(t) + thickness + pocket(t), y(t)]);
       inner.push([radius(t) - SINK, y(t)]);
     }
     // skirt: from where it leaves the body out and down to the hem as a bell,
